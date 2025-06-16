@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Glossy Transparent Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .calculator {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 32px 24px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .display {
+            background: rgba(255,255,255,0.25);
+            border-radius: 12px;
+            padding: 18px 12px;
+            font-size: 2rem;
+            color: #fff;
+            text-align: right;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            min-height: 48px;
+            word-break: break-all;
+            letter-spacing: 1px;
+            user-select: none;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        button {
+            background: rgba(255,255,255,0.25);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            color: #fff;
+            font-size: 1.3rem;
+            padding: 18px 0;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-weight: 500;
+            backdrop-filter: blur(2px);
+        }
+        button:active {
+            background: rgba(255,255,255,0.35);
+            transform: scale(0.97);
+        }
+        .operator {
+            background: rgba(30,60,114,0.35);
+            color: #ffe082;
+        }
+        .equal {
+            background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
+            color: #fff;
+            font-weight: bold;
+        }
+        .clear {
+            background: rgba(255, 82, 82, 0.35);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button onclick="appendValue('(')">(</button>
+            <button onclick="appendValue(')')">)</button>
+            <button class="operator" onclick="appendOperator('/')">÷</button>
+            <button onclick="appendValue('7')">7</button>
+            <button onclick="appendValue('8')">8</button>
+            <button onclick="appendValue('9')">9</button>
+            <button class="operator" onclick="appendOperator('*')">×</button>
+            <button onclick="appendValue('4')">4</button>
+            <button onclick="appendValue('5')">5</button>
+            <button onclick="appendValue('6')">6</button>
+            <button class="operator" onclick="appendOperator('-')">−</button>
+            <button onclick="appendValue('1')">1</button>
+            <button onclick="appendValue('2')">2</button>
+            <button onclick="appendValue('3')">3</button>
+            <button class="operator" onclick="appendOperator('+')">+</button>
+            <button onclick="appendValue('0')" style="grid-column: span 2;">0</button>
+            <button onclick="appendValue('.')">.</button>
+            <button class="equal" onclick="calculateResult()">=</button>
+        </div>
+    </div>
+    <script>
+        const display = document.getElementById('display');
+        let currentInput = '';
+        let lastResult = '';
+
+        function updateDisplay() {
+            display.textContent = currentInput || '0';
+        }
+
+        function appendValue(val) {
+            if (lastResult && /[0-9.]/.test(val)) {
+                currentInput = '';
+                lastResult = '';
+            }
+            currentInput += val;
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (currentInput === '' && op === '-') {
+                currentInput = '-';
+            } else if (currentInput !== '' && !/[+\-*/]$/.test(currentInput)) {
+                currentInput += op;
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentInput = '';
+            lastResult = '';
+            updateDisplay();
+        }
+
+        function calculateResult() {
+            try {
+                // eslint-disable-next-line no-eval
+                let result = eval(currentInput.replace(/÷/g, '/').replace(/×/g, '*'));
+                if (result === undefined) result = '';
+                currentInput = result.toString();
+                lastResult = currentInput;
+                updateDisplay();
+            } catch {
+                currentInput = 'Error';
+                updateDisplay();
+                setTimeout(clearDisplay, 1200);
+            }
+        }
+    </script>
+</body>
+</html>

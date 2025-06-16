@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Manager - macOS Finder Style</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --sidebar-bg: #f5f5f7;
+            --sidebar-active: #e0e0e6;
+            --window-bg: #fff;
+            --border: #d1d1d6;
+            --toolbar-bg: #f9f9fa;
+            --icon-color: #6e6e73;
+            --primary: #007aff;
+            --hover: #f0f0f5;
+        }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--sidebar-bg);
+            color: #222;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .finder-window {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            background: var(--window-bg);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .finder-titlebar {
+            height: 38px;
+            background: var(--toolbar-bg);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border);
+            user-select: none;
+        }
+        .finder-traffic-lights {
+            display: flex;
+            gap: 8px;
+            margin-right: 12px;
+        }
+        .finder-traffic-lights span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .finder-traffic-lights .close { background: #ff5f57; border: 1px solid #e33e41;}
+        .finder-traffic-lights .minimize { background: #febc2e; border: 1px solid #e1a116;}
+        .finder-traffic-lights .zoom { background: #28c940; border: 1px solid #12ac28;}
+        .finder-title {
+            font-weight: 500;
+            font-size: 16px;
+            color: #444;
+        }
+        .finder-main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .finder-sidebar {
+            width: 200px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sidebar-section {
+            margin-bottom: 18px;
+        }
+        .sidebar-title {
+            font-size: 12px;
+            color: #888;
+            padding: 0 18px 4px 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #222;
+            transition: background 0.15s;
+            font-size: 15px;
+        }
+        .sidebar-item.active, .sidebar-item:hover {
+            background: var(--sidebar-active);
+        }
+        .sidebar-item svg {
+            width: 18px;
+            height: 18px;
+            color: var(--icon-color);
+        }
+        .finder-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: var(--window-bg);
+        }
+        .finder-toolbar {
+            height: 44px;
+            background: var(--toolbar-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 18px;
+            gap: 12px;
+        }
+        .finder-toolbar input[type="search"] {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 15px;
+            background: #f5f5f7;
+            outline: none;
+            width: 200px;
+            transition: border 0.2s;
+        }
+        .finder-toolbar input[type="search"]:focus {
+            border: 1.5px solid var(--primary);
+            background: #fff;
+        }
+        .finder-files {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 18px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 24px;
+            background: var(--window-bg);
+        }
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .file-item.selected, .file-item:hover {
+            background: var(--hover);
+        }
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: var(--icon-color);
+        }
+        .file-name {
+            font-size: 14px;
+            text-align: center;
+            word-break: break-all;
+            color: #222;
+        }
+        @media (max-width: 1000px) {
+            .finder-window { width: 100vw; height: 100vh; margin: 0; border-radius: 0;}
+        }
+        @media (max-width: 700px) {
+            .finder-sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="finder-window">
+        <div class="finder-titlebar">
+            <div class="finder-traffic-lights">
+            </div>
+            <span class="finder-title">File Manager</span>
+        </div>
+        <div class="finder-main">
+            <nav class="finder-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Favorites</div>
+                    <div class="sidebar-item active" data-folder="recents">
+                        <svg viewBox="0 0 20 20" fill="none"><path d="M10 2a8 8 0 1 1-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        Recents
+                    </div>
+                    <div class="sidebar-item" data-folder="fanarts">
+                        <svg viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 7h12" stroke="currentColor" stroke-width="1.5"/></svg>
+                        Fan-Arts
+                    </div>
+                    <div class="sidebar-item" data-folder="pictures">
+                           <svg viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 7h12" stroke="currentColor" stroke-width="1.5"/></svg>
+                        Pictures
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Locations</div>
+                    <div class="sidebar-item" data-folder="localdisk">
+                       <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 14h14" stroke="currentColor" stroke-width="1.5"/></svg>
+                        Local Disk (C:\)
+                    </div>
+                    <div class="sidebar-item" data-folder="localdata">
+                        <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 14h14" stroke="currentColor" stroke-width="1.5"/></svg>
+                        Local Data (D:\)
+                    </div>
+                </div>
+            </nav>
+            <main class="finder-content">
+                <div class="finder-toolbar">
+                    <button id="new-folder-btn" title="New Folder" style="background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="7" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M10 10v4m2-2H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </button>
+                    <button id="upload-btn" title="Upload File" style="background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 15V5m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="4" y="15" width="12" height="2" rx="1" fill="currentColor"/></svg>
+                    </button>
+                    <input type="file" id="file-input" style="display:none" />
+                    <input type="search" id="search" placeholder="Search">
+                </div>
+                <div class="finder-files" id="files">
+                    <!-- Files will be rendered here -->
+                </div>
+            </main>
+        </div>
+    </div>
+    <!-- File preview modal -->
+<div id="file-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(30,30,40,0.55); z-index:9999; align-items:center; justify-content:center;">
+  <div id="file-modal-content" style="background:#fff; border-radius:14px; box-shadow:0 8px 32px rgba(0,0,0,0.18); padding:32px 32px 24px 32px; max-width:90vw; max-height:90vh; display:flex; flex-direction:column; align-items:center; position:relative;">
+    <button id="file-modal-close" style="position:absolute; top:12px; right:18px; background:#eee; border:none; border-radius:8px; padding:6px 14px; font-size:1.3em; cursor:pointer;">&times;</button>
+    <div id="file-modal-body" style="max-width:80vw; max-height:70vh; overflow:auto;"></div>
+  </div>
+</div>
+    <script>
+        // --- Persistent File System using localStorage ---
+    const STORAGE_KEY = "bubblegemos_filemanager_filesystem";
+
+    function saveFileSystem() {
+        // Only store serializable data (remove File objects)
+        const serializableFS = {};
+        for (const folder in fileSystem) {
+            serializableFS[folder] = (fileSystem[folder] || []).map(f => {
+                if (f.file) {
+                    // Store file as base64 string
+                    return {
+                        ...f,
+                        file: undefined,
+                        _fileData: {
+                            name: f.file.name,
+                            type: f.file.type,
+                            data: null // will be filled below
+                        }
+                    };
+                }
+                return f;
+            });
+        }
+        // Now fill in base64 data for files
+        let pending = 0, done = 0;
+        let needsSave = false;
+        for (const folder in fileSystem) {
+            (fileSystem[folder] || []).forEach((f, idx) => {
+                if (f.file) {
+                    needsSave = true;
+                    pending++;
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        serializableFS[folder][idx]._fileData.data = ev.target.result;
+                        done++;
+                        if (done === pending) {
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableFS));
+                        }
+                    };
+                    reader.readAsDataURL(f.file);
+                }
+            });
+        }
+        if (!needsSave) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableFS));
+        }
+    }
+
+    function loadFileSystem() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (!data) return;
+        try {
+            const parsed = JSON.parse(data);
+            for (const folder in parsed) {
+                fileSystem[folder] = (parsed[folder] || []).map(f => {
+                    if (f._fileData && f._fileData.data) {
+                        // Recreate File object from base64
+                        const arr = f._fileData.data.split(',');
+                        const mime = f._fileData.type;
+                        const bstr = atob(arr[1]);
+                        let n = bstr.length;
+                        const u8arr = new Uint8Array(n);
+                        while (n--) u8arr[n] = bstr.charCodeAt(n);
+                        const fileObj = new File([u8arr], f._fileData.name, { type: mime });
+                        return {
+                            ...f,
+                            file: fileObj
+                        };
+                    }
+                    return f;
+                });
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+    }
+
+    // --- File System Initialization ---
+    const defaultFileSystem = {
+        recents: [],
+        fanarts: [],
+        pictures: [],
+        localdisk: [],
+        localdata: []
+    };
+    let fileSystem = JSON.parse(JSON.stringify(defaultFileSystem));
+    loadFileSystem();
+
+        let currentFolder = "recents";
+        let selectedFile = null;
+
+        function renderFiles(folder, filter = "") {
+            const filesEl = document.getElementById('files');
+            filesEl.innerHTML = "";
+            let files = fileSystem[folder] || [];
+            if (filter) {
+                files = files.filter(f => f.name.toLowerCase().includes(filter.toLowerCase()));
+            }
+            if (files.length === 0) {
+                filesEl.innerHTML = `<div style="color:#aaa;text-align:center;width:100%;grid-column:1/-1;">No files found.</div>`;
+                return;
+            }
+            files.forEach((file, idx) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.tabIndex = 0;
+                div.innerHTML = `
+                    <div class="file-icon">${file.icon}</div>
+                    <div class="file-name">${file.name}</div>
+                `;
+                div.onclick = () => {
+                    document.querySelectorAll('.file-item.selected').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    selectedFile = idx;
+                    if (file.type === "file") {
+                        // Only open supported types
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        if (["txt","png","jpg","jpeg","mp3","mp4","pdf"].includes(ext)) {
+                            openFile(file);
+                        }
+                    }
+                };
+                filesEl.appendChild(div);
+            });
+        }
+
+        function setActiveSidebar(folder) {
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.folder === folder);
+            });
+        }
+
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentFolder = item.dataset.folder;
+                setActiveSidebar(currentFolder);
+                renderFiles(currentFolder, document.getElementById('search').value);
+            });
+        });
+
+        document.getElementById('search').addEventListener('input', (e) => {
+            renderFiles(currentFolder, e.target.value);
+        });
+
+        document.getElementById('new-folder-btn').addEventListener('click', () => {
+            const folderName = prompt("New folder name:");
+            if (folderName && folderName.trim()) {
+                fileSystem[currentFolder] = fileSystem[currentFolder] || [];
+                fileSystem[currentFolder].push({ name: folderName, type: "folder", icon: "📁" });
+                saveFileSystem();
+                renderFiles(currentFolder, document.getElementById('search').value);
+            }
+        });
+
+        // File upload logic
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        uploadBtn.onclick = () => fileInput.click();
+
+        fileInput.onchange = function(e) {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+            fileSystem[currentFolder] = fileSystem[currentFolder] || [];
+            files.forEach(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                let icon = "📄";
+                if (["png","jpg","jpeg"].includes(ext)) icon = "🖼️";
+                else if (["mp3"].includes(ext)) icon = "🎵";
+                else if (["mp4"].includes(ext)) icon = "🎬";
+                else if (["pdf"].includes(ext)) icon = "📄";
+                else if (["txt"].includes(ext)) icon = "📄";
+                else icon = "📄";
+                fileSystem[currentFolder].push({ name: file.name, type: "file", icon, file });
+            });
+            saveFileSystem();
+            renderFiles(currentFolder, document.getElementById('search').value);
+            fileInput.value = "";
+        };
+
+        // File preview modal logic
+        const fileModal = document.getElementById('file-modal');
+        const fileModalBody = document.getElementById('file-modal-body');
+        const fileModalClose = document.getElementById('file-modal-close');
+        fileModalClose.onclick = () => { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; };
+        fileModal.onclick = (e) => { if (e.target === fileModal) { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; } };
+
+        // Supported file open logic
+        function openFile(file) {
+            fileModal.style.display = 'flex';
+            fileModalBody.innerHTML = '<span style="color:#888;">Loading...</span>';
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (file.file) {
+                // Uploaded file (Blob)
+                const url = URL.createObjectURL(file.file);
+                if (["png","jpg","jpeg"].includes(ext)) {
+                    fileModalBody.innerHTML = `<img src="${url}" alt="${file.name}" style="max-width:70vw;max-height:60vh;border-radius:10px;">`;
+                } else if (["mp3"].includes(ext)) {
+                    fileModalBody.innerHTML = `<audio controls src="${url}" style="width:60vw;max-width:400px;"></audio>`;
+                } else if (["mp4"].includes(ext)) {
+                    fileModalBody.innerHTML = `<video controls src="${url}" style="max-width:70vw;max-height:60vh;border-radius:10px;"></video>`;
+                } else if (["pdf"].includes(ext)) {
+                    fileModalBody.innerHTML = `<iframe src="${url}" style="width:70vw;height:60vh;border:none;"></iframe>`;
+                } else if (["txt"].includes(ext)) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${ev.target.result.replace(/</g,"&lt;")}</pre>`;
+                    };
+                    reader.readAsText(file.file);
+                } else {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this file type.</span>`;
+                }
+            } else {
+                // Demo files (not real files)
+                if (["png","jpg","jpeg"].includes(ext)) {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Image preview not available for demo files.</span>`;
+                } else if (["mp3"].includes(ext)) {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Audio preview not available for demo files.</span>`;
+                } else if (["mp4"].includes(ext)) {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Video preview not available for demo files.</span>`;
+                } else if (["pdf"].includes(ext)) {
+                    fileModalBody.innerHTML = `<span style="color:#888;">PDF preview not available for demo files.</span>`;
+                } else if (["txt"].includes(ext)) {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Text preview not available for demo files.</span>`;
+                } else {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this file type.</span>`;
+                }
+            }
+        }
+
+        // Initial render
+        renderFiles(currentFolder);
+        setActiveSidebar(currentFolder);
+
+        // Save on page unload (as backup)
+        window.addEventListener('beforeunload', saveFileSystem);
+    </script>
+</body>
+</html>

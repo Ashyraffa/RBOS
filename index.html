@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Boot Screen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: #111;
+            color: #fff;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .logo {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .loader {
+            border: 8px solid #222;
+            border-top: 8px solid #ffffff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 30px;
+        }
+        .boot-text {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            letter-spacing: 1px;
+            animation: fadeIn 3s;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+        }
+        @keyframes fadeIn {
+            from { opacity: 0;}
+            to { opacity: 1;}
+        }
+    </style>
+</head>
+<body>
+    <div class="logo"><img src="1000.png" alt="Logo" width="200" height="200"></div>
+    <div class="loader"></div>
+    <div class="boot-text">Welcome.</div>
+    <script>
+        setTimeout(() => {
+            // Only redirect if online and no error overlay is present
+            if (navigator.onLine && !document.getElementById('global-error-overlay')) {
+                window.location.href = "desktop.html";
+            }
+        }, 4000);
+
+        // Show a custom error overlay if the browser goes offline
+        function showGlobalError() {
+            if (document.getElementById('global-error-overlay')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'global-error-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = '#0078d7';
+            overlay.style.zIndex = '99999';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+            overlay.innerHTML = `
+                <div style="text-align:center; color:#fff; font-family:'Segoe UI',Arial,sans-serif;">
+                    <div style="font-size:6.2em; margin-bottom:18px;">:(</div>
+                    <br>
+                    <div style="font-size:1.7em; margin-bottom:18px;">
+                        Your PC ran into a problem and needs to restart.
+                    </div>
+                    <div style="font-size:1.1em; margin-bottom:32px; opacity:0.85;">
+                        We're just collecting some error info, and then we'll restart for you.<br>
+                        <span style="font-size:1.2em;">0% complete</span>
+                    </div>
+                    <div style="font-size:1.1em; margin-bottom:32px; opacity:0.85;">
+                        <span style="font-size:0.95em;">If you call a support person, give them this info:</span>
+                        <br>
+                        <b>STOP CODE:</b> CONNECTION_ERROR<br>
+                    </div>
+                    <button id="reload-btn" style="margin-top:18px;padding:10px 32px;font-size:1.1em;border-radius:8px;border:none;background:#fff;color:#0078d7;cursor:pointer;font-weight:bold;">Restart</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Disable reload until online
+            document.getElementById('reload-btn').onclick = function() {
+                if (navigator.onLine) {
+                    location.reload();
+                } else {
+                    this.disabled = true;
+                    this.textContent = "Waiting for connection...";
+                    setTimeout(() => {
+                        this.disabled = false;
+                        this.textContent = "Restart";
+                    }, 1200);
+                }
+            };
+        }
+
+        function hideGlobalError() {
+            const overlay = document.getElementById('global-error-overlay');
+            if (overlay) overlay.remove();
+        }
+
+        // Show overlay if offline at load
+        if (!navigator.onLine) showGlobalError();
+
+        window.addEventListener('offline', showGlobalError);
+        window.addEventListener('online', function() {
+            hideGlobalError();
+            // Optionally, reload automatically when back online
+            // location.reload();
+        });
+
+        window.addEventListener('error', function(e) {
+            if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK' || e.target.tagName === 'IMG')) {
+                showGlobalError();
+            }
+        }, true);
+
+        setTimeout(function() {
+            if (!navigator.onLine) showGlobalError();
+        }, 15000);
+    </script>
+</body>
+</html>

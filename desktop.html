@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BubblegemOS</title>
+    <style>
+        html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          font-family: 'Segoe UI';
+          background-image: url(wallpaper.png);
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+        }
+
+        header {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 0;
+            padding-bottom: 0;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 50px;
+            min-height: 48px;
+        }
+
+        header a {
+            text-decoration: none;
+            color: #222222;
+            font-size: 18px;
+        }
+
+        #left {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 15px;
+    left: 1%;
+    background: rgba(255,255,255,0.9);
+    min-width: 150px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    z-index: 10;
+    margin-top: 8px;
+    flex-direction: column;
+}
+.dropdown-content a {
+    color: #222222;
+    padding: 10px 20px;
+    text-decoration: none;
+    display: block;
+    border-radius: 8px;
+}
+
+.dropdown-content a:hover {
+    background: rgba(200,200,200,0.3);
+}
+
+.dropdown:hover .dropdown-content,
+.dropdown:focus-within .dropdown-content {
+    display: block;
+}
+
+  .context-menu {
+    display: none; /* Hidden by default */
+    position: absolute;
+    background: rgba(255,255,255,0.9);
+    min-width: 150px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 150px;
+  }
+  
+  .context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 5px 0;
+  }
+  
+  .context-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .context-menu li:hover {
+    background-color:  rgba(200,200,200,0.3);
+  }
+
+  footer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  pointer-events: none; /* Allows clicks to pass through except on dock */
+  z-index: 1001;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.dock {
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  padding: 16px 32px 10px 32px;
+  display: flex;
+  gap: 24px;
+  pointer-events: auto; /* Allows clicking on dock */
+}
+
+.dock a {
+  display: flex;
+  align-items: flex-end;
+  transition: transform 0.2s cubic-bezier(.25,.8,.25,1);
+}
+
+.dock img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: transform 0.2s cubic-bezier(.25,.8,.25,1), box-shadow 0.2s;
+}
+
+.dock a:hover img {
+  transform: scale(1.25) translateY(-10px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+#date {
+  position: relative;
+  left: 45%;
+  color: #000000;
+}
+
+.start-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30, 30, 40, 0.55);
+  backdrop-filter: blur(18px) saturate(120%);
+  display: none;
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+}
+
+.start-menu {
+  width: 90vw;
+  max-width: 900px;
+  height: 70vh;
+  max-height: 600px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 32px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  padding: 40px 30px 30px 30px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.launchpad-close {
+  position: absolute;
+  top: 18px;
+  right: 28px;
+  font-size: 2em;
+  color: #fff;
+  background: rgba(0,0,0,0.18);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 1;
+}
+.launchpad-close:hover {
+  background: rgba(0,0,0,0.35);
+}
+
+.launchpad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 36px 48px;
+  width: 100%;
+  justify-items: center;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.launchpad-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.13s;
+}
+.launchpad-app:active {
+  transform: scale(0.93);
+}
+.launchpad-app-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.launchpad-app:hover .launchpad-app-icon {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+  background: rgba(255,255,255,0.28);
+}
+.launchpad-app-icon img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+.launchpad-app-label {
+  color: #fff;
+  font-size: 1.05em;
+  margin-top: 2px;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.22);
+  letter-spacing: 0.01em;
+  font-weight: 500;
+  max-width: 90px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1600px) {
+      header {
+        gap: 24px;
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+      #left {
+        gap: 12px;
+      }
+      header a {
+        font-size: 16px;
+      }
+      #date {
+        left: 30%;
+        font-size: 0.95em;
+      }
+      #control-center-btn {
+        left: 10% !important;
+        font-size: 1.1em !important;
+        padding: 5px 10px !important;
+      }
+    }
+
+    @media (max-width: 1366px) {
+      header {
+        gap: 12px;
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+      #left {
+        gap: 8px;
+      }
+      header a {
+        font-size: 15px;
+      }
+      #date {
+        left: 18%;
+        font-size: 0.92em;
+      }
+      #control-center-btn {
+        left: 2% !important;
+        font-size: 1em !important;
+        padding: 4px 8px !important;
+      }
+    }
+
+    @media (max-width: 900px) {
+      header {
+        flex-direction: column;
+        gap: 6px;
+        padding: 4px 2vw;
+      }
+      #left {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      #date {
+        left: 0;
+        font-size: 0.9em;
+      }
+      #control-center-btn {
+        left: 0 !important;
+        margin-left: 8px !important;
+      }
+    }
+
+    </style>
+</head>
+<body>
+    <header>
+        <nav id="left">
+            <div class="dropdown">
+            <a href="">System</a>
+            <div class="dropdown-content">
+                <a href="#" onclick="openAppWindow('Settings', 'settings.html');return false;">Settings</a>
+                <a href="#">About this PC</a>
+                <a href="#">Log Out Session</a>
+            </div>
+            </div>
+            <div class="dropdown">
+            <a href="">File</a>
+            <div class="dropdown-content">
+                <a href="">Open File Manager...</a>
+            </div>
+            </div>
+            <div class="dropdown">
+            <a href="#">Go</a>
+            <div class="dropdown-content">
+                <a href="#">Quick Search</a>
+            </div>
+            </div>
+            <div class="dropdown">
+            <a href="">Help</a>
+            <div class="dropdown-content">
+                <a href="" onclick="alert('Im raffa3527,  i made this OS. im a fan of Rainbow Bubblegem.\nAnd thats why i made this web operating system.')">About Developer</a>
+                <a href="mailto:@raffa3527@outlook.com" target="_blank">Report a Bug...</a>
+                <a href="">Give Feedback</a>
+            </div>
+            </div>
+        </nav>
+         <span id="date" style="margin-left:12px; font-size:0.98em;"></span>
+            <button id="control-center-btn" title="Control Center" style="position: relative; left: 22%; margin-left:18px; background:rgba(255,255,255,0.25); border:none; border-radius:12px; padding:6px 12px; cursor:pointer; font-size:1.3em; display:flex; align-items:center;">
+                <span style="font-size:1.3em;">&#9881;</span>
+            </button>
+        <nav id="right">
+            <p id="clock">--:--:--</p>
+        </nav>
+    </header>
+    <main>
+    <div id="custom-menu" class="context-menu">
+      <ul>
+        <li onclick="location.reload()">Refresh</li>
+      </ul>
+    </div>
+    <!-- Window container for app windows -->
+    <div id="window-container" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:4000;pointer-events:none;"></div>
+    </main>
+    <div id="spotlight-search" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:rgba(255,255,255,0.95); box-shadow:0 8px 32px rgba(0,0,0,0.2); border-radius:16px; padding:24px 32px; z-index:2000; min-width:320px;">
+  <input type="text" id="spotlight-input" placeholder="🔍 Quick Search" style="width:100%; font-size:1.2em; padding:px;  border-radius:8px; border:1px solid #ccc; outline:none;">
+</div>
+<div id="aboutpc" style="display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.97); box-shadow: 0 8px 32px rgba(0,0,0,0.18); border-radius: 18px; padding: 32px 48px; z-index: 2000; min-width: 380px; max-width: 90vw;">
+  <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 18px;">
+    <img src="1000.png" alt="Logo" style="width: 64px; height: 64px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.10);">
+    <div>
+      <h2 style="margin: 0 0 4px 0; font-size: 1.5em;">About This PC</h2>
+      <span style="color: #888;">Rainbow Bubblegem Operating System</span>
+    </div>
+  </div>
+  <div id="aboutpc-info" style="font-size: 1.1em; line-height: 1.7; margin-bottom: 18px;">
+<script>
+// About This PC logic
+document.querySelectorAll('.dropdown-content a').forEach(link => {
+  if (link.textContent.trim() === "About this PC") {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const info = [];
+      info.push(`<b>Operating System:</b> ${navigator.platform || "Unknown"}`);
+      info.push(`<b>Browser:</b> ${navigator.userAgent.split(') ')[0].replace('(', '')}`);
+      if (navigator.deviceMemory) info.push(`<b>RAM:</b> ${navigator.deviceMemory} GB`);
+      if (navigator.hardwareConcurrency) info.push(`<b>CPU Threads:</b> ${navigator.hardwareConcurrency}`);
+      info.push(`<b>Language:</b> ${navigator.language}`);
+      document.getElementById('aboutpc-info').innerHTML = info.join('<br>');
+      document.getElementById('aboutpc').style.display = 'block';
+    });
+  }
+});
+</script>
+  </div>
+  <div style="text-align: right;">
+    <button onclick="document.getElementById('aboutpc').style.display='none'" style="background: #eee; border: none; border-radius: 8px; padding: 8px 18px; font-size: 1em; cursor: pointer;">Close</button>
+  </div>
+  <p>This is a fan-made web software. I am not affiliated with Campfire Aniworks.</p>
+</div>
+
+    <footer>
+      <div class="dock">
+    <a id="start-button" aria-label="Start">
+    <img src="1000.png" alt="Start" width="32" height="32">
+    </a>
+        <a href="#" onclick="openAppWindow('File Manager', 'filemanager.html');return false;"><img src="file-manager.png" alt="File Manager"></a>
+        <a href="#" onclick="openAppWindow('Settings', 'settings.html');return false;"><img src="settings.png" alt="Settings"></a>
+        <a href="#" onclick="openAppWindow('Browser', 'browser.html');return false;"><img src="world.png" alt="Browser"></a>
+        <a href="#" onclick="openAppWindow('Calculator', 'calculator.html');return false;"><img src="calculator.png" alt="Calculator"></a>
+        <a href="#" onclick="openAppWindow('Calendar', 'calendar.html');return false;"><img src="calendar.png" alt="Calendar"></a>
+        <a href="#" onclick="openAppWindow('Camera', 'camera.html');return false;"><img src="camera.png" alt="Camera"></a>
+        <a href="#" onclick="openAppWindow('Messaging', 'messaging.html');return false;"><img src="messages.png" alt="Messages"></a>
+      </div>
+    </footer>
+
+    <div id="start-menu-overlay" class="start-menu-overlay" style="display: none;">
+      <div class="start-menu">
+        <button class="launchpad-close" onclick="document.getElementById('start-menu-overlay').style.display='none'">&times;</button>
+        <div class="launchpad-grid">
+          <div class="launchpad-app" onclick="openAppFromLaunchpad('File Manager', 'filemanager.html')">
+            <div class="launchpad-app-icon">
+              <img src="file-manager.png" alt="File Manager">
+            </div>
+            <div class="launchpad-app-label">File Manager</div>
+          </div>
+          <div class="launchpad-app" onclick="openAppFromLaunchpad('Settings', 'settings.html')">
+            <div class="launchpad-app-icon">
+              <img src="settings.png" alt="Settings">
+            </div>
+            <div class="launchpad-app-label">Settings</div>
+          </div>
+          <div class="launchpad-app" onclick="openAppFromLaunchpad('Browser', 'browser.html')">
+            <div class="launchpad-app-icon">
+              <img src="world.png" alt="Browser">
+            </div>
+            <div class="launchpad-app-label">Browser</div>
+          </div>
+          <div class="launchpad-app" onclick="openAppFromLaunchpad('Calculator', 'calculator.html')">
+            <div class="launchpad-app-icon">
+              <img src="calculator.png" alt="Calculator">
+            </div>
+            <div class="launchpad-app-label">Calculator</div>
+          </div>
+          <div class="launchpad-app" onclick="openAppFromLaunchpad('Camera', 'camera.html')">
+            <div class="launchpad-app-icon">
+              <img src="camera.png" alt="Camera">
+            </div>
+            <div class="launchpad-app-label">Camera</div>
+          </div>
+          <div class="launchpad-app" onclick="openAppFromLaunchpad('Calendar', 'calendar.html')">
+          <div class="launchpad-app-icon">
+            <img src="calendar.png" alt="Calendar">
+          </div>
+          <div class="launchpad-app-label">Calendar</div>
+        </div>
+        </div>
+
+        <br>
+
+         <div class="launchpad-grid">
+          <div class="launchpad-app" onclick="openAppFromLaunchpad('Messaging', 'messaging.html')">
+            <div class="launchpad-app-icon">
+              <img src="messages.png" alt="Messages">
+            </div>
+            <div class="launchpad-app-label">Messages</div>
+          </div>
+          </div>
+  
+
+      </div>
+      </div>  
+    </div>
+
+<div id="control-center-panel" style="display:none; position:fixed; top:70px; right:40px; width:320px; background:rgba(255,255,255,0.3); color:#000000; border-radius:20px; box-shadow:0 4px 30px rgba(0,0,0,0.1); z-index:3000; padding:24px 20px 18px 20px; backdrop-filter:blur(18px) saturate(120%);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+        <span style="font-size:1.2em; font-weight:600;">Control Center</span>
+        <button onclick="document.getElementById('control-center-panel').style.display='none'" style="background:none; border:none; color:#000000; font-size:1.4em; cursor:pointer;">&times;</button>
+    </div>
+    <div style="margin-bottom:18px;">
+        <label style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.1em;">🔆 Brightness</span>
+            <input type="range" min="10" max="100" value="100" id="brightness-slider" style="flex:1;">
+        </label>
+    </div>
+    <div style="margin-bottom:18px;">
+        <label style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.1em;">🔊 Volume</span>
+            <input type="range" min="0" max="100" value="50" id="volume-slider" style="flex:1;">
+        </label>
+    </div>
+    <div style="display:flex; gap:18px; margin-bottom:10px;">
+        <button style="flex:1; background:#fff; color:#000000; border:none; border-radius:8px; padding:8px 0; cursor:pointer;">Wi-Fi</button>
+        <button style="flex:1; background:#fff; color:#000000; border:none; border-radius:8px; padding:8px 0; cursor:pointer;">Bluetooth</button>
+    </div>
+    <div style="margin-top:10px; text-align:right;">
+        <button style="background:#fff; color:#222; border:none; border-radius:8px; padding:6px 16px; cursor:pointer; font-size:1em;" onclick="openAppWindow('Settings', 'settings.html');return false;">Open Settings</button>
+    </div>
+</div>
+
+    <script> 
+    document.querySelectorAll('.dropdown-content a').forEach(link => {
+  if (link.textContent.trim() === "About This PC") {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const spotlight = document.getElementById('aboutpc');
+      spotlight.style.display = 'block';
+      document.getElementById('spotlight-input').focus();
+    });
+  }
+});
+
+
+    document.querySelectorAll('.dropdown-content a').forEach(link => {
+  if (link.textContent.trim() === "Quick Search") {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const spotlight = document.getElementById('spotlight-search');
+      spotlight.style.display = 'block';
+      document.getElementById('spotlight-input').focus();
+    });
+  }
+});
+
+document.addEventListener('mousedown', function(e) {
+  const spotlight = document.getElementById('spotlight-search');
+  if (spotlight.style.display === 'block' && !spotlight.contains(e.target)) {
+    spotlight.style.display = 'none';
+  }
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === "Escape") {
+    document.getElementById('spotlight-search').style.display = 'none';
+  }
+});
+
+  function clock() {
+    const now  = new Date();
+    const time = now.toLocaleTimeString();
+    document.getElementById("clock").textContent = time;
+    // Add live date
+    const dateStr = now.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    document.getElementById("date").textContent = dateStr;
+}
+
+setInterval(clock, 1000);
+clock();
+
+        const customMenu = document.getElementById('custom-menu');
+
+document.addEventListener('contextmenu', function (event) {
+
+
+
+  event.preventDefault(); // Prevent the default context menu
+
+  
+  customMenu.style.top = `${event.clientY}px`;
+  customMenu.style.left = `${event.clientX}px`;
+  customMenu.style.display = 'block';
+});
+
+
+document.addEventListener('click', function () {
+  customMenu.style.display = 'none';
+});
+
+const startButton = document.getElementById('start-button');
+const startMenuOverlay = document.getElementById('start-menu-overlay');
+
+startButton.addEventListener('click', function(e) {
+  e.stopPropagation();
+  const isOpen = startMenuOverlay.style.display === 'flex';
+  startMenuOverlay.style.display = isOpen ? 'none' : 'flex';
+});
+
+document.addEventListener('click', function(event) {
+  if (!startButton.contains(event.target) && !startMenuOverlay.contains(event.target)) {
+    startMenuOverlay.style.display = 'none';
+  }
+});
+
+// Control Center logic
+const ccBtn = document.getElementById('control-center-btn');
+const ccPanel = document.getElementById('control-center-panel');
+ccBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    ccPanel.style.display = (ccPanel.style.display === 'block') ? 'none' : 'block';
+});
+document.addEventListener('click', function(e) {
+    if (ccPanel.style.display === 'block' && !ccPanel.contains(e.target) && e.target !== ccBtn) {
+        ccPanel.style.display = 'none';
+    }
+});
+// Optional: Prevent click inside panel from closing it
+ccPanel.addEventListener('click', function(e) {
+    e.stopPropagation();
+});
+
+    // Simple window system for apps
+    let windowIdCounter = 0;
+    let windows = [];
+    let topZ = 5000;
+
+    function openAppWindow(title, url) {
+      const container = document.getElementById('window-container');
+      const win = document.createElement('div');
+      const winId = "win-" + (++windowIdCounter);
+      win.dataset.winid = winId;
+
+      if (title === "Calculator") {
+        win.style.position = 'absolute';
+        win.style.top = '120px';
+        win.style.left = '120px';
+        win.style.width = '400px';
+        win.style.height = '600px';
+      } else {
+        win.style.position = 'absolute';
+        win.style.top = '60px';
+        win.style.left = '60px';
+        win.style.width = '950px';
+        win.style.height = '600px';
+      }
+
+      win.style.background = 'rgba(255,255,255,0.3)';
+      win.style.backdropFilter = 'blur(10px) saturate(180px)';
+      win.style.borderRadius = '14px';
+      win.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)';
+      win.style.zIndex = ++topZ;
+      win.style.display = 'flex';
+      win.style.flexDirection = 'column';
+      win.style.overflow = 'hidden';
+      win.style.pointerEvents = 'auto';
+      win.style.minWidth = '300px';
+      win.style.minHeight = '200px';
+      win.style.boxSizing = 'border-box';
+
+      // Title bar
+      const bar = document.createElement('div');
+      bar.style.background = 'rgba(240,240,240,0.98)';
+      bar.style.padding = '8px 16px';
+      bar.style.display = 'flex';
+      bar.style.alignItems = 'center';
+      bar.style.justifyContent = 'space-between';
+      bar.style.cursor = 'move';
+      bar.style.userSelect = 'none';
+      bar.style.fontWeight = 'bold';
+
+      // Maximize/Restore button
+      const maxBtn = document.createElement('button');
+      maxBtn.innerHTML = '&#9723;';
+      maxBtn.title = 'Maximize';
+      maxBtn.style.background = '#ffff22';
+      maxBtn.style.border = 'none';
+      maxBtn.style.borderRadius = '8px';
+      maxBtn.style.padding = '4px 10px';
+      maxBtn.style.marginRight = '8px';
+      maxBtn.style.cursor = 'pointer';
+      maxBtn.style.fontSize = '1em';
+
+      // Close button
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '&times;';
+      closeBtn.title = 'Close';
+      closeBtn.style.background = '#ff2222';
+      closeBtn.style.border = 'none';
+      closeBtn.style.borderRadius = '8px';
+      closeBtn.style.padding = '4px 12px';
+      closeBtn.style.cursor = 'pointer';
+      closeBtn.style.fontSize = '1em';
+
+      const rightBar = document.createElement('div');
+      rightBar.style.display = 'flex';
+      rightBar.appendChild(maxBtn);
+      rightBar.appendChild(closeBtn);
+
+      bar.innerHTML = `<span>${title}</span>`;
+      bar.appendChild(rightBar);
+
+      closeBtn.onclick = function() {
+        container.removeChild(win);
+        // Remove from windows array and taskbar
+        windows = windows.filter(w => w.id !== winId);
+      };
+
+      // Maximize/Restore logic
+      let isMaximized = false;
+      let prev = {};
+      maxBtn.onclick = function() {
+        if (!isMaximized) {
+          // Save previous size/position
+          prev = {
+            left: win.style.left,
+            top: win.style.top,
+            width: win.style.width,
+            height: win.style.height
+          };
+          win.style.left = '0';
+          win.style.top = '0';
+          win.style.width = '100vw';
+          win.style.height = '100vh';
+          win.style.borderRadius = '0';
+          maxBtn.title = 'Restore';
+          isMaximized = true;
+        } else {
+          win.style.left = prev.left;
+          win.style.top = prev.top;
+          win.style.width = prev.width;
+          win.style.height = prev.height;
+          win.style.borderRadius = '14px';
+          maxBtn.title = 'Maximize';
+          isMaximized = false;
+        }
+        bringToFront(win);
+      };
+
+      // Drag logic (per window)
+      let isDragging = false, offsetX = 0, offsetY = 0;
+      bar.onmousedown = function(e) {
+        if (e.target === maxBtn || e.target === closeBtn) return;
+        isDragging = true;
+        offsetX = e.clientX - win.offsetLeft;
+        offsetY = e.clientY - win.offsetTop;
+        document.body.style.userSelect = 'none';
+        bringToFront(win);
+
+        function onMouseMove(ev) {
+          if (isDragging && !isMaximized) {
+            win.style.left = (ev.clientX - offsetX) + 'px';
+            win.style.top = (ev.clientY - offsetY) + 'px';
+          }
+        }
+        function onMouseUp() {
+          isDragging = false;
+          document.body.style.userSelect = '';
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        }
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      };
+
+      // --- Resize handles ---
+      const handles = [
+        { dir: 'nw', cursor: 'nwse-resize' },
+        { dir: 'n',  cursor: 'ns-resize' },
+        { dir: 'ne', cursor: 'nesw-resize' },
+        { dir: 'e',  cursor: 'ew-resize' },
+        { dir: 'se', cursor: 'nwse-resize' },
+        { dir: 's',  cursor: 'ns-resize' },
+        { dir: 'sw', cursor: 'nesw-resize' },
+        { dir: 'w',  cursor: 'ew-resize' }
+      ];
+      handles.forEach(h => {
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle-' + h.dir;
+        handle.style.position = 'absolute';
+        handle.style.width = (h.dir.length === 1 ? '12px' : '16px');
+        handle.style.height = (h.dir.length === 1 ? '16px' : '16px');
+        handle.style.background = 'rgba(180,180,180,0.15)';
+        handle.style.zIndex = '10';
+        handle.style.cursor = h.cursor;
+        handle.style.userSelect = 'none';
+        handle.style.borderRadius = '4px';
+        if (h.dir.includes('n')) handle.style.top = '-4px';
+        if (h.dir.includes('s')) handle.style.bottom = '-4px';
+        if (h.dir.includes('e')) handle.style.right = '-4px';
+        if (h.dir.includes('w')) handle.style.left = '-4px';
+        if (h.dir === 'n' || h.dir === 's') {
+          handle.style.left = 'calc(50% - 8px)';
+        }
+        if (h.dir === 'e' || h.dir === 'w') {
+          handle.style.top = 'calc(50% - 8px)';
+        }
+        handle.onmousedown = function(e) {
+          e.stopPropagation();
+          let isResizing = true;
+          let resizeDir = h.dir;
+          let startX = e.clientX;
+          let startY = e.clientY;
+          let startW = win.offsetWidth;
+          let startH = win.offsetHeight;
+          let startL = win.offsetLeft;
+          let startT = win.offsetTop;
+          document.body.style.userSelect = 'none';
+          bringToFront(win);
+
+          function onMouseMove(ev) {
+            let dx = ev.clientX - startX;
+            let dy = ev.clientY - startY;
+            let minW = 300, minH = 200;
+            let newW = startW, newH = startH, newL = startL, newT = startT;
+            if (resizeDir.includes('e')) newW = Math.max(minW, startW + dx);
+            if (resizeDir.includes('s')) newH = Math.max(minH, startH + dy);
+            if (resizeDir.includes('w')) {
+              newW = Math.max(minW, startW - dx);
+              newL = startL + dx;
+            }
+            if (resizeDir.includes('n')) {
+              newH = Math.max(minH, startH - dy);
+              newT = startT + dy;
+            }
+            win.style.width = newW + 'px';
+            win.style.height = newH + 'px';
+            win.style.left = newL + 'px';
+            win.style.top = newT + 'px';
+          }
+          function onMouseUp() {
+            isResizing = false;
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          }
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        };
+        win.appendChild(handle);
+      });
+
+      // Iframe
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.style.flex = '1';
+      iframe.style.width = '100%';
+      iframe.style.border = 'none';
+      iframe.style.background = '#fff';
+
+      // Bring window to front on click
+      win.addEventListener('mousedown', function() {
+        bringToFront(win);
+      });
+
+      win.appendChild(bar);
+      win.appendChild(iframe);
+      container.appendChild(win);
+
+      // Add to windows array
+      windows.push({ id: winId, title, win });
+
+      // Helper: bring window to front and highlight taskbar button
+      function bringToFront(w) {
+        topZ++;
+        w.style.zIndex = topZ;
+      }
+      // Bring to front initially
+      bringToFront(win);
+    }
+
+    // Helper for launchpad: open app and close launchpad
+function openAppFromLaunchpad(title, url) {
+  openAppWindow(title, url);
+  document.getElementById('start-menu-overlay').style.display = 'none';
+}
+    // ...existing code...
+</script>
+<script>
+    // Force fullscreen on load or first user interaction
+    function requestFullscreen() {
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    }
+
+    // Try on load (may be blocked), then on first click/touch
+    window.addEventListener('load', () => {
+      requestFullscreen();
+    });
+    document.addEventListener('click', requestFullscreen, { once: true });
+    document.addEventListener('touchstart', requestFullscreen, { once: true });
+
+         // Show a custom error overlay if the browser goes offline
+        function showGlobalError() {
+            if (document.getElementById('global-error-overlay')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'global-error-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = '#0078d7';
+            overlay.style.zIndex = '99999';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+            overlay.innerHTML = `
+             <div style="text-align:center; color:#fff; font-family:'Segoe UI',Arial,sans-serif;">
+                    <div style="font-size:6.2em; margin-bottom:18px;">:(</div>
+                    <br>
+                    <div style="font-size:1.7em; margin-bottom:18px;">
+                        Your PC ran into a problem and needs to restart.
+                    </div>
+                    <div style="font-size:1.1em; margin-bottom:32px; opacity:0.85;">
+                        We're just collecting some error info, and then we'll restart for you.<br>
+                    </div>
+                    <div style="font-size:1.1em; margin-bottom:32px; opacity:0.85;">
+                        <span style="font-size:0.95em;">If you call a support person, give them this info:</span>
+                        <b>STOP CODE:</b> CONNECTION_ERROR<br>
+                    </div>
+                    <button id="reload-btn" style="margin-top:18px;padding:10px 32px;font-size:1.1em;border-radius:8px;border:none;background:#fff;color:#0078d7;cursor:pointer;font-weight:bold;">Restart</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Disable reload until online
+            document.getElementById('reload-btn').onclick = function() {
+                if (navigator.onLine) {
+                    location.reload();
+                } else {
+                    // Optionally, shake or notify user
+                    this.disabled = true;
+                    this.textContent = "Waiting for connection...";
+                    setTimeout(() => {
+                        this.disabled = false;
+                        this.textContent = "Reload";
+                    }, 1200);
+                }
+            };
+        }
+
+        function hideGlobalError() {
+            const overlay = document.getElementById('global-error-overlay');
+            if (overlay) overlay.remove();
+        }
+
+        // Show overlay if offline at load
+        if (!navigator.onLine) showGlobalError();
+
+        window.addEventListener('offline', showGlobalError);
+        window.addEventListener('online', function() {
+            hideGlobalError();
+            // Optionally, reload automatically when back online
+            // location.reload();
+        });
+
+        window.addEventListener('error', function(e) {
+            if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK' || e.target.tagName === 'IMG')) {
+                showGlobalError();
+            }
+        }, true);
+
+        setTimeout(function() {
+            if (!navigator.onLine) showGlobalError();
+        }, 15000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Messaging App with Chatbot</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #ece5dd;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+        #main-chat-layout {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            background: #ece5dd;
+        }
+        #chatbot-list {
+            width: 220px;
+            min-width: 140px;
+            max-width: 320px;
+            background: #f7f7f7;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            padding-top: 0;
+        }
+        .chatbot-list-header {
+            background: rgba(255,255,255,0.67);
+            color: #000000;
+            padding: 18px 18px 14px 18px;
+            font-size: 1.1em;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+        .chatbot-list-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        .chatbot-list-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            cursor: pointer;
+            border-bottom: 1px solid #ececec;
+            background: #f7f7f7;
+            transition: background 0.13s;
+            font-size: 1em;
+        }
+        .chatbot-list-item.selected, .chatbot-list-item:hover {
+            background: #e0f2f1;
+        }
+        .chatbot-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 1.3em;
+        }
+        .chatbot-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #chat-container {
+            flex: 1;
+            height: 100vh;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 0 1px #ddd, 0 8px 32px rgba(0,0,0,0.10);
+            border-radius: 0;
+            min-width: 0;
+        }
+        .chat-header {
+            background: rgba(255,255,255,0.67);
+            color: #000000;
+            padding: 18px 20px;
+            font-size: 1.2em;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .chat-header .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .chat-header .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            background: #ece5dd;
+            padding: 24px 12px 12px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .message-row {
+            display: flex;
+            flex-direction: row;
+            margin-bottom: 2px;
+        }
+        .message.user {
+            background: #dcf8c6;
+            color: #222;
+            align-self: flex-end;
+            border-radius: 8px 8px 2px 8px;
+            margin-left: 40px;
+            margin-right: 0;
+        }
+        .message.bot {
+            background: #fff;
+            color: #222;
+            align-self: flex-start;
+            border-radius: 8px 8px 8px 2px;
+            margin-right: 40px;
+            margin-left: 0;
+        }
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            font-size: 1em;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            margin-bottom: 2px;
+            word-break: break-word;
+            position: relative;
+            display: inline-block;
+        }
+        #input-form {
+            display: flex;
+            background: #f7f7f7;
+            padding: 14px 10px 14px 10px;
+            border-top: 1px solid #e0e0e0;
+            align-items: center;
+            gap: 8px;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 22px;
+            font-size: 1em;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+            outline: none;
+        }
+        #send-btn {
+            padding: 10px 18px;
+            border: none;
+            background: #25d366;
+            color: #fff;
+            border-radius: 22px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.18s;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.08);
+        }
+        #send-btn:hover {
+            background: #128c7e;
+        }
+        @media (max-width: 900px) {
+            #main-chat-layout {
+                flex-direction: column;
+            }
+            #chatbot-list {
+                width: 100vw;
+                max-width: none;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                flex-direction: row;
+                overflow-x: auto;
+                height: 70px;
+            }
+            .chatbot-list-header {
+                display: none;
+            }
+            .chatbot-list-items {
+                display: flex;
+                flex-direction: row;
+                width: 100vw;
+                height: 70px;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+            .chatbot-list-item {
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-width: 90px;
+                padding: 8px 6px;
+                border-bottom: none;
+                border-right: 1px solid #ececec;
+                font-size: 0.97em;
+            }
+        }
+        @media (max-width: 600px) {
+            #chat-container {
+                max-width: 100vw;
+                border-radius: 0;
+            }
+            .chat-header {
+                font-size: 1em;
+                padding: 12px 8px;
+            }
+            #messages {
+                padding: 12px 2vw 8px 2vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="main-chat-layout">
+        <aside id="chatbot-list">
+            <div class="chatbot-list-header">Your Contacts</div>
+            <ul class="chatbot-list-items" id="chatbot-list-items">
+                <!-- Chatbot items will be rendered here -->
+            </ul>
+        </aside>
+        <div id="chat-container">
+            <div class="chat-header">
+                <div class="avatar" id="chatbot-avatar">
+                    <img src="purplestar.png" alt="Bot">
+                </div>
+                <span id="chatbot-title">Purple Star</span>
+            </div>
+            <div id="messages"></div>
+            <form id="input-form" autocomplete="off">
+                <input type="text" id="user-input" autocomplete="off" placeholder="Type a message..." required />
+                <button type="submit" id="send-btn">&#9658;</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        const chatbots = [
+            {
+                id: "purplestar",
+                name: "Purple Star",
+                avatar: "purplestar.png",
+            },
+            {
+                id: "redruby",
+                name: "Red Ruby",
+                avatar: "redruby.png",
+            },
+            {
+                id: "greenleaf",
+                name: "Green Leaf",
+                avatar: "greenleaf.png",
+            },
+            {
+                id: "orangeamber",
+                name: "Orange Amber",
+                avatar: "orangeamber.png"
+            },
+            {
+                id: "yellowgold",
+                name: "Yellow Gold",
+                avatar: "yellowgold.jpeg"
+            },
+            {
+                id: "bluesapphire",
+                name: "Blue Sapphire",
+                avatar: "bluesapphire.png"
+            },
+            {
+                id: "indigokeen",
+                name: "Indigo Keen",
+                avatar: "indigokeen.png"
+            },
+        ];
+
+        const chatHistories = {};
+        chatbots.forEach(bot => chatHistories[bot.id] = []);
+
+        let currentBot = chatbots[0].id;
+
+        const chatbotList = document.getElementById('chatbot-list-items');
+        const chatbotTitle = document.getElementById('chatbot-title');
+        const chatbotAvatar = document.getElementById('chatbot-avatar');
+        const messagesDiv = document.getElementById('messages');
+        const form = document.getElementById('input-form');
+        const userInput = document.getElementById('user-input');
+
+        // Render chatbot list
+        function renderChatbotList() {
+            chatbotList.innerHTML = "";
+            chatbots.forEach(bot => {
+                const li = document.createElement('li');
+                li.className = 'chatbot-list-item' + (bot.id === currentBot ? ' selected' : '');
+                li.dataset.botid = bot.id;
+                li.innerHTML = `
+                    <div class="chatbot-avatar">
+                        <img src="${bot.avatar}" alt="${bot.name}">
+                    </div>
+                    <span>${bot.name}</span>
+                `;
+                li.onclick = () => {
+                    if (currentBot !== bot.id) {
+                        currentBot = bot.id;
+                        renderChatbotList();
+                        renderChatHeader();
+                        renderMessages();
+                    }
+                };
+                chatbotList.appendChild(li);
+            });
+        }
+
+        // Render chat header
+        function renderChatHeader() {
+            const bot = chatbots.find(b => b.id === currentBot);
+            chatbotTitle.textContent = bot ? bot.name : "";
+            chatbotAvatar.innerHTML = `<img src="${bot.avatar}" alt="${bot.name}">`;
+        }
+
+        // Render messages for current bot
+        function renderMessages() {
+            messagesDiv.innerHTML = "";
+            (chatHistories[currentBot] || []).forEach(msg => {
+                appendMessage(msg.sender, msg.text, false);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Append a message (and optionally store it)
+        function appendMessage(sender, text, store = true) {
+            const row = document.createElement('div');
+            row.className = 'message-row';
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + sender;
+            msgDiv.innerHTML = text;
+            row.appendChild(msgDiv);
+            row.style.justifyContent = sender === 'user' ? 'flex-end' : 'flex-start';
+            messagesDiv.appendChild(row);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            if (store) {
+                chatHistories[currentBot].push({ sender, text });
+            }
+        }
+
+        // Custom chatbot personalities
+        function botReply(message) {
+            const bot = currentBot;
+            const msg = message.toLowerCase();
+
+            if (bot === "purplestar") {
+                if (msg.includes('hello') || msg.includes('hi')) {
+                    return "Hiiii!! 💜✨ I’m Purple Star! Are you a new friend? I LOVE meeting new people!!";
+                } else if (msg.includes('how are you')) {
+                    return "I'm shining as always! ✨";
+                } else if (msg.includes('help')) {
+                    return "Ask me anything, I'll try to help!";
+                } else if (msg.includes('bye')) {
+                    return "See you soon!";
+                } else if (msg.includes('love')) {
+                    return "LOVING YOU??!! I'M 8!! DONT YOU THINK YOU'LL GET ME!"
+                }
+                else {
+                    return "Ooooh I don’t get that 😵 But I’m super curious! Wanna try asking again? 💜";
+                } 
+            } else if (bot === "redruby") {
+                if (msg.includes('hello') || msg.includes('hi')) {
+                    return "Well hello~ 💅 You took long enough to text me, sweetie~";
+                } else if (msg.includes('how are you')) {
+                    return "Polishing my tiara 👑 and admiring my fabulous self, duh~";
+                } else if (msg.includes('help')) {
+                    return "help you what? excuse me i'm busy, sorry.";
+                } else if (msg.includes('bye')) {
+                    return "alr bye tho";
+                } else if (msg.includes('you look')) {
+                    return "Obviously! But I’ll still pretend to blush~ teehee 💖"
+                } else if (msg.includes('love') || msg.includes('marry') || msg.includes('date')) {
+                    return "WITH YOU?!! first look yourself, you're ugly, stop being a child hunter. or else i report FBI.";
+                }
+                else {
+                    return "Ugh... you're kinda weird, but weird is fun~ Keep talking 💖";
+                }
+            } else if (bot === "greenleaf") {
+                if (msg.includes('hello') || msg.includes('hi')) {
+                    return "Hello. Please don’t waste my time unless you need something important.";
+                } else if (msg.includes('how are you')) {
+                    return "I'm good, thank you.";
+                } else if (msg.includes('help')) {
+                    return "alright, i can help with you with things, dont waste my time.";
+                } else if (msg.includes("love") || msg.includes("marry") || msg.includes("date")) {
+                    return "oh, so you want me? you keep loving me and i have numbers on CIA agents."
+                }
+                else if (msg.includes('bye')) {
+                    return "alr bye";
+                } else {
+                    return "give a response that makes sense or i'm out";
+                }
+            } else if (bot === "orangeamber") {
+ if (msg.includes('hello') || msg.includes('hi')) {
+    return "H-Hi there!! Orange Amber here 🧡 I was just icing cupcakes... d-do you want one?? 😳🧁";
+  } else if (msg.includes('how are you')) {
+    return "Umm… I'm okay, I think?? 😅 I spilled some flour earlier but I'm hanging in there!! ✨";
+  } else if (msg.includes('help')) {
+    return "O-Oh! You need help?? Uh... okay okay!! *deep breath* I’ll try my best!! 💪🍊";
+  } else if (msg.includes('bye')) {
+    return "O-Okay!! Stay sweet and safe!! I hope you have a magical day ✨🧁💖";
+  } else if (msg.includes('love') || msg.includes('marry') || msg.includes('date')) {
+    const savageReplies = [
+      "TF??? no no, me and you— we ain’t same, my mom ain’t like this, now if u didn’t change your mind, GTFO!",
+      "H-Huh?! What did you just say??? That’s... w-weird! I’m just a kid!! 😱",
+      "Ewww—NO. I'm not your waifu, I'm a baker-in-training!! GET OUT!! 🍪💥",
+    ];
+    return savageReplies[Math.floor(Math.random() * savageReplies.length)];
+  } else if (msg.includes('bake') || msg.includes('cake') || msg.includes('cookie')) {
+    return "Ooooh!! I LOVE baking!! 🧁 Just don’t ask me to use the oven alone... it kinda scares me 😳";
+  } else if (msg.includes('sad') || msg.includes('cry')) {
+    return "Awwww... d-do you wanna talk? I’ll listen... or I can bake you something sweet!! 🧁🍊";
+  } else {
+    return "U-Um... Orange Amber is listening!! Sorry if I’m quiet, I’m just a lil nervous 😖";
+  }
+ } else if (bot === "yellowgold") {
+  if (msg.includes("hello") || msg.includes("hi")) {
+    return "...hi. um... i don’t talk much. is that okay?";
+  }
+  if (msg.includes("how are you")) {
+    return "...i’m fine. just drawing. my pet’s here too...";
+  }
+  if (msg.includes("what are you doing")) {
+    return "...painting something... but i don’t know if it’s good.";
+  }
+  if (msg.includes("love") || msg.includes("marry") || msg.includes("date")) {
+    return "i may a shy girl, but if you keep like this, i will complain this to FBI."
+  }
+  if (msg.includes("art") || msg.includes("draw") || msg.includes("paint")) {
+    return "...i love art. it’s the only time i feel... free.";
+  }
+  if (msg.includes("help")) {
+    return "...i can try... if you really need it...";
+  }
+  else {
+      return "...i don’t really know what to say. sorry...";
+  }
+}
+            if (bot === "bluesapphire") {
+  if (msg.includes("hi") || msg.includes("hello")) {
+    return "YO! You ready to RACE or what?! 😎💙 Let’s make this chat FAST!";
+  }
+  if (msg.includes("how are you")) {
+    return "FULL POWER, AS ALWAYS 💥💪 I just did 50 laps around the reef.";
+  }
+  if (msg.includes("love") || msg.includes("marry") || msg.includes("date")) {
+    return "say that again and i'll beat yo ass";
+  }
+  if (msg.includes("you’re cool")) {
+    return "THANKS! Speed, strength, and style — that’s my triple combo 🏅💙";
+  }
+  if (msg.includes("race") || msg.includes("challenge")) {
+    return "BRING. IT. ON. 🏃‍♀️💨 I never back down from a challenge!";
+  }
+
+  return "You talkin’ or stalling? Come on, I’m bored — say something worth racing for! 💥";
+}
+         if (bot === "indigokeen") {
+    if (msg.includes("hello") || msg.includes("hi")) {
+    return "...what do you want?";
+  }
+  if (msg.includes("how are you") || msg.includes("okay")) {
+    return "...i'm alive. that's enough.";
+  }
+  if (msg.includes("friend")) {
+    return "don't get too close. you'll regret it.";
+  }
+  if (msg.includes("love") || msg.includes("marry") || msg.includes("date")) {
+    return "i've watched my mom died because of Black Dia. what makes you think i care about you?";
+  }
+  if (msg.includes("black dia")) {
+    return "...she took everything. someday, i’ll will take revenge.";
+  }
+  if (msg.includes("trust") || msg.includes("open up")) {
+    return "people talk about trust like it's a gift.  it's not. it's a mistake.";
+  }
+
+  return "...if you’re here for small talk, leave.";
+}
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text) return;
+            appendMessage('user', text);
+            userInput.value = '';
+            setTimeout(() => {
+                const reply = botReply(text);
+                appendMessage('bot', reply);
+            }, 500);
+        });
+
+        // Initial render
+        renderChatbotList();
+        renderChatHeader();
+        renderMessages();
+    </script>
+</body>
+</html>

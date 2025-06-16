@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Safari Style Homepage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #e8eaf6 0%, #f5f7fa 100%);
+            min-height: 100vh;
+            color: #222;
+        }
+        .container {
+            max-width: 900px;
+            margin: 60px auto 0 auto;
+            padding: 32px 24px 48px 24px;
+            background: rgba(255,255,255,0.85);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(60,60,60,0.12);
+        }
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: #f1f3f6;
+            border-radius: 16px;
+            padding: 12px 20px;
+            margin-bottom: 36px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .search-bar input {
+            border: none;
+            background: transparent;
+            font-size: 1.2rem;
+            flex: 1;
+            outline: none;
+            margin-left: 10px;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 32px 0 16px 0;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+        .favorites {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 28px;
+        }
+        .favorite {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: #222;
+            transition: background 0.15s;
+            border-radius: 12px;
+            padding: 12px 0 8px 0;
+        }
+        .favorite:hover {
+            background: #f0f4fa;
+        }
+        .favorite-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #e3e7ee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .favorite-label {
+            font-size: 0.98rem;
+            margin-top: 2px;
+            word-break: break-word;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 16px 4px 32px 4px;
+            }
+            .favorites {
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="section-title">Where do you want to go today, Bubblies?</div>
+        <div class="favorites">
+            <a class="favorite" href="https://www.google.com/?igu=1">
+                <div class="favorite-icon" style="background:#fff;">
+                    <img src="https://www.google.com/favicon.ico" alt="Google" width="32" height="32">
+                </div>
+                <div class="favorite-label">Google</div>
+            </a>
+            <a class="favorite" href="https://rainbow-bubblegem.fandom.com/wiki/Rainbow_Bubblegem_Wiki">
+                <div class="favorite-icon" style="background:#fff;">
+                    <img src="https://static.wikia.nocookie.net/rainbow-bubblegem/images/4/4a/Site-favicon.ico/revision/latest?cb=20250528085712" alt="RB Wiki" width="32" height="32">
+                </div>
+                <div class="favorite-label">RB Wiki</div>
+            </a>
+            <a class="favorite" href="https://www.campfireani.com/3rd-project">
+                <div class="favorite-icon" style="background:#fff;">
+                    <img src="1000.png" width="32" height="32">
+                </div>
+                <div class="favorite-label">Rainbow Bubblegem</div>
+            </a>
+            <a class="favorite" href="https://ilovecharacter.com/news/search.php?q=%EB%A0%88%EC%9D%B8%EB%B3%B4%EC%9A%B0+%EB%B2%84%EB%B8%94%EC%A0%AC">
+                <div class="favorite-icon" style="background:#fff;">
+                    <img src="https://www.google.com/s2/favicons?domain=ilovecharacter.com" width="32" height="32">
+                </div>
+                <div class="favorite-label">I Love Character (RB News)</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

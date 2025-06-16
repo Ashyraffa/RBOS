@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Rainbow BubblegemOS</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Segoe UI';
+            }
+
+            .toolbar {
+    background-color: #333333;
+}
+
+#Green {
+    background-color: #00ff00;
+    border: none;
+    border-radius: 5px;
+}
+
+#Green:hover {
+    background-color: #00ff0090;
+}
+
+#urlInput {
+    border-radius: 5px;
+}
+
+.footbar input {
+    border: none;
+}
+
+#back {
+    background-color: #ff0000;
+    border: none;
+    border-radius: 5px;
+}
+
+#back:hover {
+    background-color: #a00202;
+}
+
+#close {
+    border: none;
+    border-radius: 5px;
+}
+
+#forward {
+    background-color: aquamarine;
+    border: none;
+    border-radius: 5px;
+}
+
+.bookmark {
+    display: none;
+    width: 120px;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background: #e0e0e0;
+    min-width: 90px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.bookmark button {
+    text-decoration: none;
+    color: #121212;
+    background-color: #e0e0e0;
+    border: none;
+}
+
+.bookmark button:hover {
+    background: #f5f5f5;
+}
+
+#homepage {
+    background-color: yellow;
+    border: none;
+    border-radius: 5px;
+}
+
+#bookmarks {
+    background-color: orange;
+    border: none;
+    border-radius: 5px;
+}
+
+#bookmarks:hover {
+    background-color: rgba(255, 166, 0, 0.503);
+}
+
+#slicegallery {
+    background-color: dimgrey;
+    border: none;
+    border-radius: 5px;
+}
+
+#slicegallery:hover {
+    background-color: rgba(105, 105, 105, 0.497);
+}
+
+#homepage:hover {
+    background-color: rgba(255, 255, 0, 0.636);
+}
+
+#forward:hover {
+    background-color: lawngreen;
+}
+
+#refresh {
+    background-color: lightseagreen;
+    border: none;
+    border-radius: 5px;
+}
+
+#refresh:hover {
+    background-color: rgb(22, 121, 116);
+}
+    .tab-bar {
+      display: flex;
+      background: #333333;
+      padding: 5px;
+      border-bottom: 1px solid #333;
+    }
+    .tab-bar button {
+      background: #f4f4f4;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+    .tab-bar button.active-tab {
+      background: #d4d4d4;
+      font-weight: bold;
+    }
+    .tab-bar #new-tab {
+      background: #4caf50;
+      color: white;
+      font-weight: bold;
+    }
+        button {
+      margin-left: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+        .toolbar, .bookmarks {
+      display: flex;
+      padding: 8px;
+    }
+    .footbar {
+      display: flex;
+      padding: 8px;
+      background: #333333;
+    }
+        </style>
+    </head>
+    <body>
+         <div class="toolbar">
+    <button id="back" onclick="goBack()">Back</button>
+    <button id="forward" onclick="goForward()">Forward</button>
+    <button id="refresh" onclick="refreshPage()">Refresh</button>
+    <button id="homepage" onclick="goHome()">Home Page</button>
+    <div style="position: relative; display: inline-block;">
+    <button id="bookmarks" onclick="showbookmarks()">Bookmarks</button>
+    <div class="bookmark">
+      <button style="text-align: left;" onclick="redirect()">Rainbow Bubblegem</button>
+      <button onclick="redirect3()">RSS Feeds</button>
+      <button style="text-align: left;" onclick="redirect2()">Ashyraffa's Website</button>
+      <button style="text-align: left;" onclick="redirect4()">8-1 Website</button>
+    </div>
+    <button id="slicegallery">Web Slice Gallery</button>
+    </div>
+  </div>
+  <div id="tab-bar" class="tab-bar">
+    <button id="new-tab" onclick="addTab()">+</button>
+  </div>
+  <div class="footbar">
+    <input type="text" id="urlInput" placeholder="Search or enter web address" value="https://www.google.com">
+    <button id="Green" onclick="loadSite()">Go</button>
+  </div>
+    </body>
+</html>

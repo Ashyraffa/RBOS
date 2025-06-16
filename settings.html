@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings – Web OS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --sidebar-bg: #ececec;
+            --sidebar-active: #d1d1d6;
+            --window-border: #c1c1c1;
+            --accent: #007aff;
+            --text: #222;
+            --icon-size: 22px;
+        }
+        body {
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            width: 100vw;
+            height: 100vh;
+            min-width: 100vw;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .window {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            background: #fff;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .window-header {
+            display: flex;
+            align-items: center;
+            height: 36px;
+            background: linear-gradient(to bottom, #f9f9fa 80%, #e9e9eb 100%);
+            border-bottom: 1px solid #e1e1e3;
+            padding: 0 16px;
+        }
+        .window-controls {
+            display: flex;
+            gap: 6px;
+            margin-right: 12px;
+        }
+        .window-controls span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .window-controls .close { background: #ff5f57; border: 1px solid #e33e41;}
+        .window-controls .min { background: #ffbd2e; border: 1px solid #e09e3e;}
+        .window-controls .max { background: #28c940; border: 1px solid #12ac28;}
+        .window-title {
+            font-weight: 500;
+            font-size: 15px;
+            flex: 1;
+            text-align: left;
+            color: #444;
+        }
+        .settings-app {
+            display: flex;
+            flex: 1;
+            height: 100%;
+            min-height: 0;
+        }
+        .sidebar {
+            width: 180px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid #e1e1e3;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .sidebar li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-size: 15px;
+            border-left: 4px solid transparent;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .sidebar li.active {
+            background: var(--sidebar-active);
+            border-left: 4px solid var(--accent);
+            color: var(--accent);
+        }
+        .sidebar li:hover:not(.active) {
+            background: #e5e5ea;
+        }
+        .sidebar .icon {
+            width: var(--icon-size);
+            height: var(--icon-size);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-content {
+            flex: 1;
+            padding: 32px 32px 32px 40px;
+            overflow-y: auto;
+            height: 100%;
+            min-height: 0;
+        }
+        .settings-section {
+            max-width: 420px;
+        }
+        .settings-section h2 {
+            font-size: 20px;
+            margin: 0 0 18px 0;
+            font-weight: 600;
+        }
+        .settings-row {
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .settings-row label {
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .settings-row input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 18px;
+            height: 18px;
+        }
+        .settings-row input[type="range"] {
+            width: 120px;
+            accent-color: var(--accent);
+        }
+        .settings-row select, .settings-row input[type="text"] {
+            font-size: 15px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #fafafd;
+        }
+        @media (max-width: 900px) {
+            .window-header {
+                padding: 0 6px;
+            }
+            .settings-content {
+                padding: 18px 4vw 18px 4vw;
+            }
+            .sidebar {
+                width: 120px;
+                font-size: 0.97em;
+            }
+        }
+        @media (max-width: 600px) {
+            .window-header {
+                padding: 0 2vw;
+            }
+            .settings-app {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100vw;
+                flex-direction: row;
+                border-right: none;
+                border-bottom: 1px solid #e1e1e3;
+                height: auto;
+            }
+            .sidebar li {
+                flex: 1;
+                justify-content: center;
+                border-left: none;
+                border-bottom: 4px solid transparent;
+            }
+            .sidebar li.active {
+                border-left: none;
+                border-bottom: 4px solid var(--accent);
+            }
+            .settings-content {
+                padding: 12px 2vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="window">
+        <div class="window-header">
+            <div class="window-controls">
+            </div>
+            <span class="window-title">Settings</span>
+        </div>
+        <div class="settings-app">
+            <ul class="sidebar" id="sidebar">
+                <li class="active" data-section="general">
+                    <span class="icon">⚙️</span> General
+                </li>
+                <li data-section="appearance">
+                    <span class="icon">🎨</span> Appearance
+                </li>
+                <li data-section="network">
+                    <span class="icon">🌐</span> Network
+                </li>
+                <li data-section="about">
+                    <span class="icon">ℹ️</span> About
+                </li>
+            </ul>
+            <div class="settings-content" id="settings-content">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+    <script>
+        const sections = {
+            general: `
+                <div class="settings-section">
+                    <h2>General</h2>
+                    <div class="settings-row">
+                        <label for="startup">Open at startup</label>
+                        <input type="checkbox" id="startup">
+                    </div>
+                    <div class="settings-row">
+                        <label for="language">Language</label>
+                        <select id="language">
+                            <option>English</option>
+                            <option>Español</option>
+                            <option>Français</option>
+                            <option>Deutsch</option>
+                        </select>
+                    </div>
+                </div>
+            `,
+            appearance: `
+                <div class="settings-section">
+                    <h2>Appearance</h2>
+                    <div class="settings-row">
+                        <label for="theme">Theme</label>
+                        <select id="theme">
+                            <option>Light</option>
+                            <option>Dark</option>
+                            <option>Auto</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label for="accent-color">Accent Color</label>
+                        <input type="color" id="accent-color" value="#007aff">
+                    </div>
+                    <div class="settings-row">
+                        <label for="font-size">Font Size</label>
+                        <input type="range" id="font-size" min="12" max="22" value="15">
+                    </div>
+                </div>
+            `,
+            network: `
+                <div class="settings-section">
+                    <h2>Network</h2>
+                    <div class="settings-row">
+                        <label for="wifi">Wi-Fi</label>
+                        <input type="checkbox" id="wifi" checked>
+                    </div>
+                    <div class="settings-row">
+                        <label for="proxy">Proxy</label>
+                        <input type="text" id="proxy" placeholder="proxy.example.com">
+                    </div>
+                </div>
+            `,
+            about: `
+                <div class="settings-section">
+                    <h2>About</h2>
+                    <div class="settings-row">
+                        <label>Rainbow Bubblegem OS version:</label>
+                        <span>Home English</span>
+                    </div>
+                    <div class="settings-row">
+                        <label>Developed by</label>
+                        <span>raffa3527</span>
+                    </div>
+                </div>
+            `
+        };
+
+        function showSection(section) {
+            document.getElementById('settings-content').innerHTML = sections[section];
+        }
+
+        document.getElementById('sidebar').addEventListener('click', function(e) {
+            let li = e.target.closest('li');
+            if (!li) return;
+            document.querySelectorAll('.sidebar li').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+            showSection(li.dataset.section);
+        });
+
+        // Show default section
+        showSection('general');
+    </script>
+</body>
+</html>

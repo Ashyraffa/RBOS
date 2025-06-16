@@ -1,0 +1,23 @@
+.start-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 1000;
+}
+
+.start-menu {
+  position: absolute;
+  left: 50%;
+  bottom: 60px; /* Adjust based on Dock height */
+  transform: translateX(-50%);
+  width: 400px;
+  height: 500px;
+  background: rgba(40, 40, 40, 0.97);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  padding: 24px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  /* ...more styling as needed... */
+}
