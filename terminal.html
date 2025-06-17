@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web CLI Terminal</title>
+    <style>
+        body {
+            background: #222;
+            color: #eee;
+            font-family: monospace;
+            margin: 0;
+            padding: 0;
+        }
+        #terminal {
+            width: 100vw;
+            height: 100vh;
+            padding: 16px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background: #222;
+        }
+        .line {
+            display: block;
+            width: 100%;
+        }
+        .prompt {
+            color: #0f0;
+        }
+        #input-line {
+            outline: none;
+            border: none;
+            background: transparent;
+            color: #eee;
+            font-family: inherit;
+            font-size: inherit;
+            width: 90vw;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+    <script>
+        const terminal = document.getElementById('terminal');
+        const promptStr = 'bubblies:~$ ';
+        let history = [];
+        let historyIndex = 0;
+
+        function appendLine(text, isPrompt = false) {
+            const line = document.createElement('div');
+            line.className = 'line';
+            if (isPrompt) {
+                line.innerHTML = `<span class="prompt">${promptStr}</span><input id="input-line" autocomplete="off" autofocus />`;
+            } else {
+                line.textContent = text;
+            }
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+            if (isPrompt) {
+                const input = line.querySelector('#input-line');
+                input.focus();
+                input.addEventListener('keydown', handleInput);
+            }
+        }
+
+        function handleInput(e) {
+            const input = e.target;
+            if (e.key === 'Enter') {
+                const command = input.value;
+                history.push(command);
+                historyIndex = history.length;
+                input.disabled = true;
+                input.removeEventListener('keydown', handleInput);
+                processCommand(command);
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    input.value = history[historyIndex];
+                }
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < history.length - 1) {
+                    historyIndex++;
+                    input.value = history[historyIndex];
+                } else {
+                    historyIndex = history.length;
+                    input.value = '';
+                }
+                e.preventDefault();
+            }
+        }
+
+        function processCommand(cmd) {
+            const args = cmd.trim().split(' ');
+            const command = args[0];
+            switch (command) {
+                case '':
+                    appendLine('');
+                    break;
+                case 'ver' :
+                    appendLine('Rainbow Bubblegem OS, ver 1.0');
+                    break;
+                case 'help':
+                    appendLine('Available commands: ver, help, echo, clear, date');
+                    break;
+                case 'echo':
+                    appendLine(args.slice(1).join(' '));
+                    break;
+                case 'clear':
+                    terminal.innerHTML = '';
+                    break;
+                case 'date':
+                    appendLine(new Date().toString());
+                    break;
+                default:
+                    appendLine(`Command not found: ${command}`);
+            }
+            // Always append a new prompt after each command
+            appendLine('', true);
+        }
+
+        // Initial prompt
+        appendLine('Welcome to Rainbow Bubblegem OS Terminal! Type "help" for commands.');
+        appendLine('', true);
+    </script>
+</body>
+</html>
