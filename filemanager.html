@@ -229,6 +229,9 @@
                     <button id="upload-btn" title="Upload File" style="background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 15V5m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="4" y="15" width="12" height="2" rx="1" fill="currentColor"/></svg>
                     </button>
+                    <button id="new-folder-btn" title="New Folder" style="background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;" onclick="localStorage.clear()">
+                        Clear All
+                    </button>
                     <input type="file" id="file-input" style="display:none" />
                     <input type="search" id="search" placeholder="Search">
                 </div>
@@ -246,241 +249,283 @@
   </div>
 </div>
     <script>
-        // --- Persistent File System using localStorage ---
-    const STORAGE_KEY = "bubblegemos_filemanager_filesystem";
+const STORAGE_KEY = "bubblegemos_filemanager_filesystem";
 
-    function saveFileSystem() {
-        // Only store serializable data (remove File objects)
-        const serializableFS = {};
-        for (const folder in fileSystem) {
-            serializableFS[folder] = (fileSystem[folder] || []).map(f => {
-                if (f.file) {
-                    // Store file as base64 string
+// --- File System Structure ---
+let fileSystem = {
+    recents: [],
+    fanarts: [],
+    pictures: [],
+    localdisk: [],
+    localdata: []
+};
+
+// --- Load from localStorage ---
+function loadFileSystem() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return;
+    try {
+        const parsed = JSON.parse(data);
+        for (const folder in parsed) {
+            fileSystem[folder] = (parsed[folder] || []).map(f => {
+                if (f._fileData && f._fileData.data) {
+                    // Recreate File object from base64
+                    const arr = f._fileData.data.split(',');
+                    const mime = f._fileData.type;
+                    const bstr = atob(arr[1]);
+                    let n = bstr.length;
+                    const u8arr = new Uint8Array(n);
+                    while (n--) u8arr[n] = bstr.charCodeAt(n);
+                    const fileObj = new File([u8arr], f._fileData.name, { type: mime });
                     return {
                         ...f,
-                        file: undefined,
-                        _fileData: {
-                            name: f.file.name,
-                            type: f.file.type,
-                            data: null // will be filled below
-                        }
+                        file: fileObj,
+                        type: "file"
                     };
                 }
                 return f;
             });
         }
-        // Now fill in base64 data for files
-        let pending = 0, done = 0;
-        let needsSave = false;
-        for (const folder in fileSystem) {
-            (fileSystem[folder] || []).forEach((f, idx) => {
-                if (f.file) {
-                    needsSave = true;
-                    pending++;
-                    const reader = new FileReader();
-                    reader.onload = function(ev) {
-                        serializableFS[folder][idx]._fileData.data = ev.target.result;
-                        done++;
-                        if (done === pending) {
-                            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableFS));
-                        }
-                    };
-                    reader.readAsDataURL(f.file);
-                }
-            });
-        }
-        if (!needsSave) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableFS));
-        }
+    } catch (e) {
+        // Ignore errors
     }
+}
 
-    function loadFileSystem() {
-        const data = localStorage.getItem(STORAGE_KEY);
-        if (!data) return;
-        try {
-            const parsed = JSON.parse(data);
-            for (const folder in parsed) {
-                fileSystem[folder] = (parsed[folder] || []).map(f => {
-                    if (f._fileData && f._fileData.data) {
-                        // Recreate File object from base64
-                        const arr = f._fileData.data.split(',');
-                        const mime = f._fileData.type;
-                        const bstr = atob(arr[1]);
-                        let n = bstr.length;
-                        const u8arr = new Uint8Array(n);
-                        while (n--) u8arr[n] = bstr.charCodeAt(n);
-                        const fileObj = new File([u8arr], f._fileData.name, { type: mime });
-                        return {
-                            ...f,
-                            file: fileObj
-                        };
-                    }
-                    return f;
-                });
-            }
-        } catch (e) {
-            // Ignore errors
-        }
-    }
-
-    // --- File System Initialization ---
-    const defaultFileSystem = {
-        recents: [],
-        fanarts: [],
-        pictures: [],
-        localdisk: [],
-        localdata: []
-    };
-    let fileSystem = JSON.parse(JSON.stringify(defaultFileSystem));
-    loadFileSystem();
-
-        let currentFolder = "recents";
-        let selectedFile = null;
-
-        function renderFiles(folder, filter = "") {
-            const filesEl = document.getElementById('files');
-            filesEl.innerHTML = "";
-            let files = fileSystem[folder] || [];
-            if (filter) {
-                files = files.filter(f => f.name.toLowerCase().includes(filter.toLowerCase()));
-            }
-            if (files.length === 0) {
-                filesEl.innerHTML = `<div style="color:#aaa;text-align:center;width:100%;grid-column:1/-1;">No files found.</div>`;
-                return;
-            }
-            files.forEach((file, idx) => {
-                const div = document.createElement('div');
-                div.className = 'file-item';
-                div.tabIndex = 0;
-                div.innerHTML = `
-                    <div class="file-icon">${file.icon}</div>
-                    <div class="file-name">${file.name}</div>
-                `;
-                div.onclick = () => {
-                    document.querySelectorAll('.file-item.selected').forEach(el => el.classList.remove('selected'));
-                    div.classList.add('selected');
-                    selectedFile = idx;
-                    if (file.type === "file") {
-                        // Only open supported types
-                        const ext = file.name.split('.').pop().toLowerCase();
-                        if (["txt","png","jpg","jpeg","mp3","mp4","pdf"].includes(ext)) {
-                            openFile(file);
-                        }
+// --- Save to localStorage ---
+function saveFileSystem() {
+    const serializableFS = {};
+    for (const folder in fileSystem) {
+        serializableFS[folder] = (fileSystem[folder] || []).map(f => {
+            if (f.file) {
+                return {
+                    ...f,
+                    file: undefined,
+                    _fileData: {
+                        name: f.file.name,
+                        type: f.file.type,
+                        data: null // will be filled below
                     }
                 };
-                filesEl.appendChild(div);
-            });
-        }
-
-        function setActiveSidebar(folder) {
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.folder === folder);
-            });
-        }
-
-        document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.addEventListener('click', () => {
-                currentFolder = item.dataset.folder;
-                setActiveSidebar(currentFolder);
-                renderFiles(currentFolder, document.getElementById('search').value);
-            });
+            }
+            return f;
         });
-
-        document.getElementById('search').addEventListener('input', (e) => {
-            renderFiles(currentFolder, e.target.value);
-        });
-
-        document.getElementById('new-folder-btn').addEventListener('click', () => {
-            const folderName = prompt("New folder name:");
-            if (folderName && folderName.trim()) {
-                fileSystem[currentFolder] = fileSystem[currentFolder] || [];
-                fileSystem[currentFolder].push({ name: folderName, type: "folder", icon: "📁" });
-                saveFileSystem();
-                renderFiles(currentFolder, document.getElementById('search').value);
+    }
+    let pending = 0, done = 0;
+    let needsSave = false;
+    for (const folder in fileSystem) {
+        (fileSystem[folder] || []).forEach((f, idx) => {
+            if (f.file) {
+                needsSave = true;
+                pending++;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    serializableFS[folder][idx]._fileData.data = ev.target.result;
+                    done++;
+                    if (done === pending) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableFS));
+                    }
+                };
+                reader.readAsDataURL(f.file);
             }
         });
+    }
+    if (!needsSave) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableFS));
+    }
+}
 
-        // File upload logic
-        const uploadBtn = document.getElementById('upload-btn');
-        const fileInput = document.getElementById('file-input');
-        uploadBtn.onclick = () => fileInput.click();
+// --- Initialization ---
+loadFileSystem();
+let currentFolder = "recents";
+let selectedFile = null;
 
-        fileInput.onchange = function(e) {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
-            fileSystem[currentFolder] = fileSystem[currentFolder] || [];
-            files.forEach(file => {
+// --- Render Files ---
+function renderFiles(folder, filter = "") {
+    const filesEl = document.getElementById('files');
+    filesEl.innerHTML = "";
+    let files = fileSystem[folder] || [];
+    if (filter) {
+        files = files.filter(f => f.name.toLowerCase().includes(filter.toLowerCase()));
+    }
+    if (files.length === 0) {
+        filesEl.innerHTML = `<div style="color:#aaa;text-align:center;width:100%;grid-column:1/-1;">No files found.</div>`;
+        return;
+    }
+    files.forEach((file, idx) => {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.tabIndex = 0;
+        div.innerHTML = `
+            <div class="file-icon">${file.icon || "📄"}</div>
+            <div class="file-name">${file.name}</div>
+            <button class="delete-file-btn" title="Delete" style="margin-top:4px;background:#ffeaea;border:1px solid #f5bcbc;color:#c00;border-radius:5px;padding:2px 10px;cursor:pointer;font-size:13px;">Delete</button>
+        `;
+        div.onclick = (e) => {
+            if (e.target.classList.contains('delete-file-btn')) return;
+            document.querySelectorAll('.file-item.selected').forEach(el => el.classList.remove('selected'));
+            div.classList.add('selected');
+            selectedFile = idx;
+            if (file.type === "file") {
                 const ext = file.name.split('.').pop().toLowerCase();
-                let icon = "📄";
-                if (["png","jpg","jpeg"].includes(ext)) icon = "🖼️";
-                else if (["mp3"].includes(ext)) icon = "🎵";
-                else if (["mp4"].includes(ext)) icon = "🎬";
-                else if (["pdf"].includes(ext)) icon = "📄";
-                else if (["txt"].includes(ext)) icon = "📄";
-                else icon = "📄";
-                fileSystem[currentFolder].push({ name: file.name, type: "file", icon, file });
-            });
-            saveFileSystem();
-            renderFiles(currentFolder, document.getElementById('search').value);
-            fileInput.value = "";
-        };
-
-        // File preview modal logic
-        const fileModal = document.getElementById('file-modal');
-        const fileModalBody = document.getElementById('file-modal-body');
-        const fileModalClose = document.getElementById('file-modal-close');
-        fileModalClose.onclick = () => { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; };
-        fileModal.onclick = (e) => { if (e.target === fileModal) { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; } };
-
-        // Supported file open logic
-        function openFile(file) {
-            fileModal.style.display = 'flex';
-            fileModalBody.innerHTML = '<span style="color:#888;">Loading...</span>';
-            const ext = file.name.split('.').pop().toLowerCase();
-            if (file.file) {
-                // Uploaded file (Blob)
-                const url = URL.createObjectURL(file.file);
-                if (["png","jpg","jpeg"].includes(ext)) {
-                    fileModalBody.innerHTML = `<img src="${url}" alt="${file.name}" style="max-width:70vw;max-height:60vh;border-radius:10px;">`;
-                } else if (["mp3"].includes(ext)) {
-                    fileModalBody.innerHTML = `<audio controls src="${url}" style="width:60vw;max-width:400px;"></audio>`;
-                } else if (["mp4"].includes(ext)) {
-                    fileModalBody.innerHTML = `<video controls src="${url}" style="max-width:70vw;max-height:60vh;border-radius:10px;"></video>`;
-                } else if (["pdf"].includes(ext)) {
-                    fileModalBody.innerHTML = `<iframe src="${url}" style="width:70vw;height:60vh;border:none;"></iframe>`;
-                } else if (["txt"].includes(ext)) {
-                    const reader = new FileReader();
-                    reader.onload = function(ev) {
-                        fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${ev.target.result.replace(/</g,"&lt;")}</pre>`;
-                    };
-                    reader.readAsText(file.file);
-                } else {
-                    fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this file type.</span>`;
-                }
-            } else {
-                // Demo files (not real files)
-                if (["png","jpg","jpeg"].includes(ext)) {
-                    fileModalBody.innerHTML = `<span style="color:#888;">Image preview not available for demo files.</span>`;
-                } else if (["mp3"].includes(ext)) {
-                    fileModalBody.innerHTML = `<span style="color:#888;">Audio preview not available for demo files.</span>`;
-                } else if (["mp4"].includes(ext)) {
-                    fileModalBody.innerHTML = `<span style="color:#888;">Video preview not available for demo files.</span>`;
-                } else if (["pdf"].includes(ext)) {
-                    fileModalBody.innerHTML = `<span style="color:#888;">PDF preview not available for demo files.</span>`;
-                } else if (["txt"].includes(ext)) {
-                    fileModalBody.innerHTML = `<span style="color:#888;">Text preview not available for demo files.</span>`;
-                } else {
-                    fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this file type.</span>`;
+                if (["txt","png","jpg","jpeg","mp3","mp4","pdf"].includes(ext)) {
+                    openFile(file);
                 }
             }
-        }
+        };
+        div.querySelector('.delete-file-btn').onclick = (ev) => {
+            ev.stopPropagation();
+            if (confirm(`Delete "${file.name}"?`)) {
+                fileSystem[folder].splice(idx, 1);
+                saveFileSystem();
+                renderFiles(folder, document.getElementById('search').value);
+            }
+        };
+        filesEl.appendChild(div);
+    });
+}
 
-        // Initial render
-        renderFiles(currentFolder);
+// --- Sidebar ---
+function setActiveSidebar(folder) {
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.folder === folder);
+    });
+}
+document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.addEventListener('click', () => {
+        currentFolder = item.dataset.folder;
         setActiveSidebar(currentFolder);
+        renderFiles(currentFolder, document.getElementById('search').value);
+    });
+});
 
-        // Save on page unload (as backup)
-        window.addEventListener('beforeunload', saveFileSystem);
-    </script>
+// --- Search ---
+document.getElementById('search').addEventListener('input', (e) => {
+    renderFiles(currentFolder, e.target.value);
+});
+
+// --- New Folder ---
+document.getElementById('new-folder-btn').addEventListener('click', () => {
+    const folderName = prompt("New folder name:");
+    if (folderName && folderName.trim()) {
+        fileSystem[currentFolder] = fileSystem[currentFolder] || [];
+        fileSystem[currentFolder].push({ name: folderName, type: "folder", icon: "📁" });
+        saveFileSystem();
+        renderFiles(currentFolder, document.getElementById('search').value);
+    }
+});
+
+// --- File Upload ---
+const uploadBtn = document.getElementById('upload-btn');
+const fileInput = document.getElementById('file-input');
+uploadBtn.onclick = () => fileInput.click();
+
+fileInput.onchange = function(e) {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    fileSystem[currentFolder] = fileSystem[currentFolder] || [];
+    files.forEach(file => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        let icon = "📄";
+        if (["png","jpg","jpeg"].includes(ext)) icon = "🖼️";
+        else if (["mp3"].includes(ext)) icon = "🎵";
+        else if (["mp4"].includes(ext)) icon = "🎬";
+        else if (["pdf"].includes(ext)) icon = "📄";
+        else if (["txt"].includes(ext)) icon = "📄";
+        else icon = "📄";
+        fileSystem[currentFolder].push({ name: file.name, type: "file", icon, file });
+    });
+    saveFileSystem();
+    renderFiles(currentFolder, document.getElementById('search').value);
+    fileInput.value = "";
+};
+
+// --- Modal Viewer ---
+const fileModal = document.getElementById('file-modal');
+const fileModalBody = document.getElementById('file-modal-body');
+const fileModalClose = document.getElementById('file-modal-close');
+fileModalClose.onclick = () => { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; };
+fileModal.onclick = (e) => { if (e.target === fileModal) { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; } };
+
+function openFile(file) {
+    fileModal.style.display = 'flex';
+    fileModalBody.innerHTML = '<span style="color:#888;">Loading...</span>';
+    const ext = file.name.split('.').pop().toLowerCase();
+    const getBase64 = () => file._fileData && file._fileData.data ? file._fileData.data : null;
+
+    let url = null;
+    if (file.file) {
+        try {
+            url = URL.createObjectURL(file.file);
+        } catch (e) {
+            url = null;
+        }
+        if (!url && getBase64()) url = getBase64();
+    } else if (file.demo && getBase64()) {
+        url = getBase64();
+    }
+
+    if (["png","jpg","jpeg"].includes(ext)) {
+        if (url) {
+            fileModalBody.innerHTML = `<img src="${url}" alt="${file.name}" style="max-width:70vw;max-height:60vh;border-radius:10px;">`;
+        } else {
+            fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this image file.</span>`;
+        }
+    } else if (["mp3"].includes(ext)) {
+        if (url) {
+            fileModalBody.innerHTML = `<audio controls src="${url}" style="width:60vw;max-width:400px;"></audio>`;
+        } else {
+            fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this audio file.</span>`;
+        }
+    } else if (["mp4"].includes(ext)) {
+        if (url) {
+            fileModalBody.innerHTML = `
+<video controls style="max-width:70vw;max-height:60vh;border-radius:10px;">
+  <source src="${url}" type="video/mp4">
+  Your browser does not support the video tag.
+</video>`;
+        } else {
+            fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this video file.</span>`;
+        }
+    } else if (["pdf"].includes(ext)) {
+        if (url) {
+            fileModalBody.innerHTML = `<iframe src="${url}" style="width:70vw;height:60vh;border:none;"></iframe>`;
+        } else {
+            fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this PDF file.</span>`;
+        }
+    } else if (["txt"].includes(ext)) {
+        if (file.file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${ev.target.result.replace(/</g,"&lt;")}</pre>`;
+            };
+            reader.onerror = function() {
+                if (getBase64()) {
+                    const arr = getBase64().split(',');
+                    const bstr = atob(arr[1]);
+                    fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${bstr.replace(/</g,"&lt;")}</pre>`;
+                } else {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this text file.</span>`;
+                }
+            };
+            reader.readAsText(file.file);
+        } else if (getBase64()) {
+            const arr = getBase64().split(',');
+            const bstr = atob(arr[1]);
+            fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${bstr.replace(/</g,"&lt;")}</pre>`;
+        } else {
+            fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this text file.</span>`;
+        }
+    } else {
+        fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this file type.</span>`;
+    }
+}
+
+// --- Initial Render ---
+renderFiles(currentFolder);
+setActiveSidebar(currentFolder);
+
+// --- Save on page unload ---
+window.addEventListener('beforeunload', saveFileSystem);
+</script>
 </body>
 </html>
