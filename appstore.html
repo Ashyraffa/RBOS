@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>App Store</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #2d3436;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+        .search-bar {
+            background: #fff;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            border: none;
+            width: 250px;
+            font-size: 1rem;
+            outline: none;
+        }
+        main {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .text p {
+            font-size: 1.3rem;
+        }
+        .text a {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>RB Store</h1>
+        <input class="search-bar" type="text" placeholder="Search apps...">
+    </header>
+    <main>
+        <div class="text">
+          <p>We weren't able to connect to the Store. This might have happened <br>
+             because of a server problem or the network connection might haved <br>
+             timed out. Please wait a few minutes and <a href="#" onclick="location.reload()">try again.</a></p>
+        </div>
+    </main>
+</body>
+</html>

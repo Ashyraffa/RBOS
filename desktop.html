@@ -445,6 +445,8 @@ document.querySelectorAll('.dropdown-content a').forEach(link => {
         <a href="#" onclick="openAppWindow('Messaging', 'messaging.html');return false;"><img src="messages.png" alt="Messages"></a>
         <a href="https://github.com/Ashyraffa/Rainbow-Bubblegem-Web-OS/" target="_blank"><img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub"></a>
         <a href="#" onclick="openAppWindow('Terminal', 'terminal.html');return false"><img src="terminal.png" alt="Terminal"></a>
+        <a href="#" onclick="openAppWindow('Notes', 'notes.html');return false;"><img src="notes.png" alt="Notes"></a>
+        <a href="#" onclick="openAppWindow('Store', 'appstore.html');return false;"><img src="shop.png" alt="Store"></a>
       </div>
     </footer>
 
@@ -510,6 +512,18 @@ document.querySelectorAll('.dropdown-content a').forEach(link => {
                <img src="terminal.png" alt="Terminal">
               </div>
               <div class="launchpad-app-label">Terminal</div>
+            </div>
+            <div class="launchpad-app" onclick="openAppFromLaunchpad('Notes', 'notes.html')">
+              <div class="launchpad-app-icon">
+                <img src="notes.png" alt="Notes">
+              </div>
+              <div class="launchpad-app-label">Notes</div>
+            </div>
+            <div class="launchpad-app" onclick="openAppFromLaunchpad('Store', 'appstore.html')">
+              <div class="launchpad-app-icon">
+                <img src="shop.png" alt="Store">
+              </div>
+              <div class="launchpad-app-label">Store</div>
             </div>
           </div>
           </div>
@@ -941,10 +955,11 @@ function openAppFromLaunchpad(title, url) {
                         Your PC ran into a problem and needs to restart.
                     </div>
                     <div style="font-size:1.1em; margin-bottom:32px; opacity:0.85;">
-                        We're just collecting some error info, and then we'll restart for you.<br>
+                        We're just collecting some error info, and then we'll restart for you.
                     </div>
                     <div style="font-size:1.1em; margin-bottom:32px; opacity:0.85;">
                         <span style="font-size:0.95em;">If you call a support person, give them this info:</span>
+                        <br>
                         <b>STOP CODE:</b> CONNECTION_ERROR<br>
                     </div>
                     <button id="reload-btn" style="margin-top:18px;padding:10px 32px;font-size:1.1em;border-radius:8px;border:none;background:#fff;color:#0078d7;cursor:pointer;font-weight:bold;">Restart</button>

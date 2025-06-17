@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notepad - Notes App</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .notepad-window {
+            width: 100%;
+            max-width: 100vw;
+            box-shadow: 4px 4px 0 #444;
+            background: #fff;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .title-bar {
+            background: linear-gradient(to bottom, #0a246a 0%, #3a6ea5 100%);
+            color: #fff;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            user-select: none;
+        }
+        .title-bar .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+        .window-btn {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #fff;
+            background: #c0c0c0;
+            color: #000;
+            font-size: 12px;
+            text-align: center;
+            line-height: 16px;
+            cursor: pointer;
+            border-radius: 2px;
+            margin-left: 2px;
+        }
+        .menu-bar {
+            background: rgba(255,255,255,0.67);
+            color: #000;
+            padding: 2px 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #aaa;
+            display: flex;
+            gap: 16px;
+            cursor: pointer;
+            position: relative;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: #fff;
+            border: 1px solid #aaa;
+            box-shadow: 0 2px 8px #0002;
+            border-radius: 4px;
+            z-index: 10;
+            min-width: 120px;
+        }
+        .dropdown-menu button {
+            width: 100%;
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+        }
+        .dropdown-menu button:hover {
+            background: #f0f0f0;
+        }
+        .notepad-area {
+            width: 100%;
+            min-width: 0;
+            height: calc(100vh - 68px); 
+            min-height: 120px;
+            border: none;
+            resize: none;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 16px;
+            padding: 8px;
+            background: #fff;
+            color: #000;
+            outline: none;
+            box-sizing: border-box;
+            display: block;
+        }
+        .status-bar {
+            background: #ece9d8;
+            color: #333;
+            font-size: 13px;
+            padding: 2px 8px;
+            border-top: 1px solid #aaa;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .menu-bar span:hover {
+            background: #aaaaaa;
+        }
+        @media (max-width: 700px) {
+            .notepad-window {
+                border-width: 1px;
+                box-shadow: none;
+            }
+            .notepad-area {
+                font-size: 15px;
+                padding: 6px;
+                height: calc(100vh - 60px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notepad-window">
+        <div class="menu-bar">
+            <span id="file-menu-btn">File
+                <div id="file-menu" class="dropdown-menu">
+                    <button onclick="saveAsTxt()">Save as .txt</button>
+                </div>
+            </span>
+            <span id="edit-menu-btn">Edit</span>
+            <span id="format-menu-btn">Format</span>
+            <span id="view-menu-btn">View</span>
+            <span id="help-menu-btn">Help</span>
+        </div>
+        <textarea class="notepad-area" id="notes" placeholder="Type your notes here..."></textarea>
+        <div class="status-bar" id="status-bar">
+            Ln 1, Col 1
+        </div>
+    </div>
+    <script>
+        // Save notes to localStorage
+        const notes = document.getElementById('notes');
+        notes.value = localStorage.getItem('notepad-notes') || '';
+        notes.addEventListener('input', () => {
+            localStorage.setItem('notepad-notes', notes.value);
+            updateStatus();
+        });
+
+        // Update status bar with line and column
+        function updateStatus() {
+            const val = notes.value.substr(0, notes.selectionStart);
+            const lines = val.split('\n');
+            const line = lines.length;
+            const col = lines[lines.length - 1].length + 1;
+            document.getElementById('status-bar').textContent = `Ln ${line}, Col ${col}`;
+        }
+        notes.addEventListener('keyup', updateStatus);
+        notes.addEventListener('click', updateStatus);
+        notes.addEventListener('focus', updateStatus);
+        notes.addEventListener('select', updateStatus);
+        updateStatus();
+
+        // Formatting logic
+        function formatText(type) {
+            const textarea = document.getElementById('notes');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            let before = textarea.value.substring(0, start);
+            let selected = textarea.value.substring(start, end);
+            let after = textarea.value.substring(end);
+            let syntaxStart = '', syntaxEnd = '';
+            if (type === 'bold') {
+                syntaxStart = '**'; syntaxEnd = '**';
+            } else if (type === 'italic') {
+                syntaxStart = '_'; syntaxEnd = '_';
+            } else if (type === 'underline') {
+                syntaxStart = '__'; syntaxEnd = '__';
+            }
+            // If already wrapped, unwrap
+            if (selected.startsWith(syntaxStart) && selected.endsWith(syntaxEnd)) {
+                selected = selected.slice(syntaxStart.length, selected.length - syntaxEnd.length);
+            } else {
+                selected = syntaxStart + selected + syntaxEnd;
+            }
+            textarea.value = before + selected + after;
+            textarea.focus();
+            textarea.selectionStart = start;
+            textarea.selectionEnd = start + selected.length;
+            localStorage.setItem('notepad-notes', textarea.value);
+            updateStatus();
+        }
+
+        // Keyboard shortcuts for formatting
+        document.getElementById('notes').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && !e.shiftKey) {
+                if (e.key === 'b' || e.key === 'B') {
+                    e.preventDefault(); formatText('bold');
+                } else if (e.key === 'i' || e.key === 'I') {
+                    e.preventDefault(); formatText('italic');
+                } else if (e.key === 'u' || e.key === 'U') {
+                    e.preventDefault(); formatText('underline');
+                }
+            }
+        });
+
+        // Save as .txt logic
+        function saveAsTxt() {
+            const text = document.getElementById('notes').value;
+            const blob = new Blob([text], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "notes.txt";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        // Dropdown menu logic
+        function showMenu(menuId, btnId) {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+            const btn = document.getElementById(btnId);
+            const menu = document.getElementById(menuId);
+            if (!menu) return;
+            // Position menu under the button
+            const rect = btn.getBoundingClientRect();
+            menu.style.left = btn.offsetLeft + "px";
+            menu.style.top = btn.offsetHeight + "px";
+            menu.style.display = 'block';
+        }
+        function hideMenus() {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+        }
+        // Show/hide on hover
+        document.getElementById('file-menu-btn').addEventListener('mouseenter', () => showMenu('file-menu', 'file-menu-btn'));
+        document.getElementById('format-menu-btn').addEventListener('mouseenter', () => showMenu('format-menu', 'format-menu-btn'));
+        document.getElementById('edit-menu-btn').addEventListener('mouseenter', hideMenus);
+        document.getElementById('view-menu-btn').addEventListener('mouseenter', hideMenus);
+        document.getElementById('help-menu-btn').addEventListener('mouseenter', hideMenus);
+        document.querySelector('.menu-bar').addEventListener('mouseleave', hideMenus);
+    </script>
+</body>
+</html>
