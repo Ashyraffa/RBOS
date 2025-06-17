@@ -93,155 +93,69 @@
     </div>
     <iframe id="browser-iframe" src="homepage.html"></iframe>
     <script>
-    // --- Modern Browser Implementation with Tabs and Bookmarks ---
+    // Simple browser history for one tab
+    let historyStack = ["homepage.html"];
+    let historyIndex = 0;
 
-    // Tab structure: { title, url, history: [], historyIndex: number }
-    let tabs = [
-        { title: "Home", url: "homepage.html", history: ["homepage.html"], historyIndex: 0 }
-    ];
-    let currentTab = 0;
-
-    function renderTabs() {
-        const tabBar = document.getElementById('tab-bar');
-        // Remove all except #new-tab
-        tabBar.querySelectorAll('button.tab-btn').forEach(btn => btn.remove());
-        tabs.forEach((tab, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'tab-btn' + (idx === currentTab ? ' active-tab' : '');
-            btn.textContent = tab.title || 'Tab';
-            btn.title = tab.url;
-            btn.onclick = () => switchTab(idx);
-            // Close button
-            if (tabs.length > 1) {
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'tab-close';
-                closeBtn.innerHTML = '&times;';
-                closeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    closeTab(idx);
-                };
-                btn.appendChild(closeBtn);
-            }
-            tabBar.insertBefore(btn, document.getElementById('new-tab'));
-        });
-    }
-
-    function switchTab(idx) {
-        currentTab = idx;
-        updateUI();
-    }
-
-    function closeTab(idx) {
-        tabs.splice(idx, 1);
-        if (currentTab >= tabs.length) currentTab = tabs.length - 1;
-        updateUI();
-    }
-
-    function addTab(url = "homepage.html") {
-        tabs.push({ title: "New Tab", url, history: [url], historyIndex: 0 });
-        currentTab = tabs.length - 1;
-        updateUI();
-    }
-
-    function updateUI() {
-        renderTabs();
-        const tab = tabs[currentTab];
-        document.getElementById('urlInput').value = tab.url;
-        loadIframe(tab.url);
-    }
-
-    function loadIframe(url) {
+    function loadIframe(url, push = true) {
         const iframe = document.getElementById('browser-iframe');
         iframe.src = url;
-        iframe.onload = function() {
-            // Try to get title from iframe (may fail due to CORS)
-            try {
-                const doc = iframe.contentDocument || iframe.contentWindow.document;
-                tabs[currentTab].title = doc.title || url;
-            } catch {
-                tabs[currentTab].title = url;
-            }
-            renderTabs();
-        };
+        document.getElementById('urlInput').value = url;
+        if (push) {
+            // If navigating, cut forward history
+            historyStack = historyStack.slice(0, historyIndex + 1);
+            historyStack.push(url);
+            historyIndex = historyStack.length - 1;
+        }
+    }
+
+    function navigateTo(url) {
+        url = url.trim();
+        if (!/^https?:\/\//.test(url) && !url.endsWith(".html")) {
+            url = "https://www.google.com/search?q=" + encodeURIComponent(url);
+        }
+        loadIframe(url, true);
     }
 
     function goBack() {
-        const tab = tabs[currentTab];
-        if (tab.historyIndex > 0) {
-            tab.historyIndex--;
-            tab.url = tab.history[tab.historyIndex];
-            updateUI();
+        if (historyIndex > 0) {
+            historyIndex--;
+            loadIframe(historyStack[historyIndex], false);
         }
     }
     function goForward() {
-        const tab = tabs[currentTab];
-        if (tab.historyIndex < tab.history.length - 1) {
-            tab.historyIndex++;
-            tab.url = tab.history[tab.historyIndex];
-            updateUI();
+        if (historyIndex < historyStack.length - 1) {
+            historyIndex++;
+            loadIframe(historyStack[historyIndex], false);
         }
     }
     function refreshPage() {
-        updateUI();
+        loadIframe(historyStack[historyIndex], false);
     }
     function goHome() {
         navigateTo("homepage.html");
     }
-    function navigateTo(url) {
-        if (!/^https?:\/\//.test(url) && !url.endsWith(".html")) {
-            url = "https://www.google.com/search?q=" + encodeURIComponent(url);
-        }
-        const tab = tabs[currentTab];
-        tab.url = url;
-        // Update history
-        tab.history = tab.history.slice(0, tab.historyIndex + 1);
-        tab.history.push(url);
-        tab.historyIndex = tab.history.length - 1;
-        updateUI();
-    }
 
-    // --- Bookmarks ---
-    function openBookmark(url) {
-        navigateTo(url);
-        hideBookmarks();
-    }
-    function showBookmarks() {
-        document.getElementById('bookmark-dropdown').style.display = 'block';
-        document.addEventListener('mousedown', hideBookmarksOnClick, { once: true });
-    }
-    function hideBookmarks() {
-        document.getElementById('bookmark-dropdown').style.display = 'none';
-    }
-    function hideBookmarksOnClick(e) {
-        if (!document.getElementById('bookmark-dropdown').contains(e.target) &&
-            e.target.id !== 'bookmarks') {
-            hideBookmarks();
-        }
-    }
-    document.getElementById('bookmarks').onclick = showBookmarks;
-
-    // --- Web Slice Gallery (demo) ---
-    document.getElementById('slicegallery').onclick = () => {
-        navigateTo('https://en.wikipedia.org/wiki/Web_slice');
-    };
-
-    // --- Navigation ---
     document.getElementById('back').onclick = goBack;
     document.getElementById('forward').onclick = goForward;
     document.getElementById('refresh').onclick = refreshPage;
     document.getElementById('homepage').onclick = goHome;
     document.getElementById('Green').onclick = () => {
-        navigateTo(document.getElementById('urlInput').value.trim());
+        navigateTo(document.getElementById('urlInput').value);
     };
     document.getElementById('urlInput').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
-            navigateTo(this.value.trim());
+            navigateTo(this.value);
         }
     });
-    document.getElementById('new-tab').onclick = () => addTab();
 
-    // --- Initial Render ---
-    updateUI();
+    // Keep urlInput in sync when navigating with buttons
+    document.getElementById('browser-iframe').addEventListener('load', function() {
+        document.getElementById('urlInput').value = historyStack[historyIndex];
+    });
+
+    // Initial load
+    loadIframe("homepage.html", false);
     </script>
 </body>
 </html>
