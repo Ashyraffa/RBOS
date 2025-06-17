@@ -1,188 +1,338 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <title>Rainbow BubblegemOS</title>
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-                font-family: 'Segoe UI';
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Rainbow BubblegemOS</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f6fa;
+        }
+        .toolbar {
+            background: rgba(255,255,255,.0.67);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            height: 48px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .toolbar button {
+            margin-right: 8px;
+            background: #777777;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 14px;
+            font-size: 15px;
+            transition: background 0.15s;
+        }
+        .toolbar button:hover {
+            background: #44495a;
+        }
+        .toolbar .bookmark-group {
+            position: relative;
+            display: inline-block;
+        }
+        .bookmark {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 110%;
+            background: #fff;
+            min-width: 160px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+            z-index: 10;
+            padding: 8px 0;
+            border-radius: 8px;
+        }
+        .bookmark button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            color: #23272f;
+            padding: 10px 18px;
+            font-size: 15px;
+            border-radius: 0;
+            transition: background 0.13s;
+        }
+        .bookmark button:hover {
+            background: #f5f6fa;
+        }
+        .tab-bar {
+            display: flex;
+            background: #f5f6fa;
+            padding: 0 8px;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+            overflow-x: auto;
+        }
+        .tab-bar button {
+            background: #e0e0e0;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            padding: 7px 18px;
+            margin-right: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.13s;
+            position: relative;
+        }
+        .tab-bar button.active-tab {
+            background: #fff;
+            font-weight: bold;
+            color: #000000;
+            border-bottom: 2px solid #777777;
+        }
+        .tab-bar button.tab-close {
+            background: none;
+            color: #888;
+            border: none;
+            font-size: 16px;
+            padding: 0 6px;
+            margin-left: 2px;
+            cursor: pointer;
+            border-radius: 50%;
+            position: absolute;
+            right: 2px;
+            top: 2px;
+        }
+        .tab-bar #new-tab {
+            background: #777777;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 7px 16px;
+            margin-right: 0;
+        }
+        .footbar {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: #f5f6fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        #urlInput {
+            flex: 1;
+            border-radius: 6px;
+            border: 1px solid #d1d1d6;
+            padding: 8px 14px;
+            font-size: 15px;
+            margin-right: 10px;
+            background: #fff;
+            outline: none;
+            transition: border 0.15s;
+        }
+        #urlInput:focus {
+            border: 1.5px solid #007aff;
+        }
+        .footbar button {
+            background: #353945;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 14px;
+            font-size: 15px;
+            margin-right: 8px;
+            transition: background 0.15s;
+        }
+        .footbar button:hover {
+            background: #44495a;
+        }
+        #browser-iframe {
+            width: 100vw;
+            height: calc(100vh - 48px - 48px - 44px);
+            border: none;
+            background: #fff;
+            display: block;
+        }
+        @media (max-width: 700px) {
+            .finder-sidebar { display: none; }
+            #browser-iframe { height: calc(100vh - 48px - 44px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button id="back" title="Back">&#8592;</button>
+        <button id="forward" title="Forward">&#8594;</button>
+        <button id="refresh" title="Refresh">&#8635;</button>
+        <button id="homepage" title="Home Page">&#8962;</button>
+        <div class="bookmark-group">
+            <button id="bookmarks" title="Bookmarks">&#9733; Bookmarks</button>
+            <div class="bookmark" id="bookmark-dropdown">
+                <button onclick="openBookmark('https://bubblegemos.github.io/')">Rainbow Bubblegem</button>
+                <button onclick="openBookmark('https://rss.com/')">RSS Feeds</button>
+                <button onclick="openBookmark('https://ashyraffa.github.io/')">Ashyraffa's Website</button>
+                <button onclick="openBookmark('https://8-1.github.io/')">8-1 Website</button>
+            </div>
+        </div>
+        <button id="slicegallery" title="Web Slice Gallery">Web Slice Gallery</button>
+    </div>
+    <div id="tab-bar" class="tab-bar">
+        <!-- Tabs will be rendered here -->
+        <button id="new-tab" title="New Tab">+</button>
+    </div>
+    <div class="footbar">
+        <input type="text" id="urlInput" placeholder="Search or enter web address" value="https://www.google.com">
+        <button id="Green" title="Go">Go</button>
+    </div>
+    <iframe id="browser-iframe" src="homepage.html"></iframe>
+    <script>
+    // --- Modern Browser Implementation with Tabs and Bookmarks ---
+
+    // Tab structure: { title, url, history: [], historyIndex: number }
+    let tabs = [
+        { title: "Home", url: "homepage.html", history: ["homepage.html"], historyIndex: 0 }
+    ];
+    let currentTab = 0;
+
+    function renderTabs() {
+        const tabBar = document.getElementById('tab-bar');
+        // Remove all except #new-tab
+        tabBar.querySelectorAll('button.tab-btn').forEach(btn => btn.remove());
+        tabs.forEach((tab, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'tab-btn' + (idx === currentTab ? ' active-tab' : '');
+            btn.textContent = tab.title || 'Tab';
+            btn.title = tab.url;
+            btn.onclick = () => switchTab(idx);
+            // Close button
+            if (tabs.length > 1) {
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'tab-close';
+                closeBtn.innerHTML = '&times;';
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeTab(idx);
+                };
+                btn.appendChild(closeBtn);
             }
-
-            .toolbar {
-    background-color: #333333;
-}
-
-#Green {
-    background-color: #00ff00;
-    border: none;
-    border-radius: 5px;
-}
-
-#Green:hover {
-    background-color: #00ff0090;
-}
-
-#urlInput {
-    border-radius: 5px;
-}
-
-.footbar input {
-    border: none;
-}
-
-#back {
-    background-color: #ff0000;
-    border: none;
-    border-radius: 5px;
-}
-
-#back:hover {
-    background-color: #a00202;
-}
-
-#close {
-    border: none;
-    border-radius: 5px;
-}
-
-#forward {
-    background-color: aquamarine;
-    border: none;
-    border-radius: 5px;
-}
-
-.bookmark {
-    display: none;
-    width: 120px;
-    position: absolute;
-    left: 0;
-    top: 100%;
-    background: #e0e0e0;
-    min-width: 90px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    padding: 5px;
-    border-radius: 5px;
-}
-
-.bookmark button {
-    text-decoration: none;
-    color: #121212;
-    background-color: #e0e0e0;
-    border: none;
-}
-
-.bookmark button:hover {
-    background: #f5f5f5;
-}
-
-#homepage {
-    background-color: yellow;
-    border: none;
-    border-radius: 5px;
-}
-
-#bookmarks {
-    background-color: orange;
-    border: none;
-    border-radius: 5px;
-}
-
-#bookmarks:hover {
-    background-color: rgba(255, 166, 0, 0.503);
-}
-
-#slicegallery {
-    background-color: dimgrey;
-    border: none;
-    border-radius: 5px;
-}
-
-#slicegallery:hover {
-    background-color: rgba(105, 105, 105, 0.497);
-}
-
-#homepage:hover {
-    background-color: rgba(255, 255, 0, 0.636);
-}
-
-#forward:hover {
-    background-color: lawngreen;
-}
-
-#refresh {
-    background-color: lightseagreen;
-    border: none;
-    border-radius: 5px;
-}
-
-#refresh:hover {
-    background-color: rgb(22, 121, 116);
-}
-    .tab-bar {
-      display: flex;
-      background: #333333;
-      padding: 5px;
-      border-bottom: 1px solid #333;
+            tabBar.insertBefore(btn, document.getElementById('new-tab'));
+        });
     }
-    .tab-bar button {
-      background: #f4f4f4;
-      border: 1px solid #ccc;
-      padding: 5px 10px;
-      margin-right: 5px;
-      cursor: pointer;
+
+    function switchTab(idx) {
+        currentTab = idx;
+        updateUI();
     }
-    .tab-bar button.active-tab {
-      background: #d4d4d4;
-      font-weight: bold;
+
+    function closeTab(idx) {
+        tabs.splice(idx, 1);
+        if (currentTab >= tabs.length) currentTab = tabs.length - 1;
+        updateUI();
     }
-    .tab-bar #new-tab {
-      background: #4caf50;
-      color: white;
-      font-weight: bold;
+
+    function addTab(url = "homepage.html") {
+        tabs.push({ title: "New Tab", url, history: [url], historyIndex: 0 });
+        currentTab = tabs.length - 1;
+        updateUI();
     }
-        button {
-      margin-left: 4px;
-      padding: 6px 10px;
-      cursor: pointer;
+
+    function updateUI() {
+        renderTabs();
+        const tab = tabs[currentTab];
+        document.getElementById('urlInput').value = tab.url;
+        loadIframe(tab.url);
     }
-        .toolbar, .bookmarks {
-      display: flex;
-      padding: 8px;
+
+    function loadIframe(url) {
+        const iframe = document.getElementById('browser-iframe');
+        iframe.src = url;
+        iframe.onload = function() {
+            // Try to get title from iframe (may fail due to CORS)
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                tabs[currentTab].title = doc.title || url;
+            } catch {
+                tabs[currentTab].title = url;
+            }
+            renderTabs();
+        };
     }
-    .footbar {
-      display: flex;
-      padding: 8px;
-      background: #333333;
+
+    function goBack() {
+        const tab = tabs[currentTab];
+        if (tab.historyIndex > 0) {
+            tab.historyIndex--;
+            tab.url = tab.history[tab.historyIndex];
+            updateUI();
+        }
     }
-        </style>
-    </head>
-    <body>
-         <div class="toolbar">
-    <button id="back" onclick="goBack()">Back</button>
-    <button id="forward" onclick="goForward()">Forward</button>
-    <button id="refresh" onclick="refreshPage()">Refresh</button>
-    <button id="homepage" onclick="goHome()">Home Page</button>
-    <div style="position: relative; display: inline-block;">
-    <button id="bookmarks" onclick="showbookmarks()">Bookmarks</button>
-    <div class="bookmark">
-      <button style="text-align: left;" onclick="redirect()">Rainbow Bubblegem</button>
-      <button onclick="redirect3()">RSS Feeds</button>
-      <button style="text-align: left;" onclick="redirect2()">Ashyraffa's Website</button>
-      <button style="text-align: left;" onclick="redirect4()">8-1 Website</button>
-    </div>
-    <button id="slicegallery">Web Slice Gallery</button>
-    </div>
-  </div>
-  <div id="tab-bar" class="tab-bar">
-    <button id="new-tab" onclick="addTab()">+</button>
-  </div>
-  <div class="footbar">
-    <input type="text" id="urlInput" placeholder="Search or enter web address" value="https://www.google.com">
-    <button id="Green" onclick="loadSite()">Go</button>
-  </div>
-    </body>
+    function goForward() {
+        const tab = tabs[currentTab];
+        if (tab.historyIndex < tab.history.length - 1) {
+            tab.historyIndex++;
+            tab.url = tab.history[tab.historyIndex];
+            updateUI();
+        }
+    }
+    function refreshPage() {
+        updateUI();
+    }
+    function goHome() {
+        navigateTo("homepage.html");
+    }
+    function navigateTo(url) {
+        if (!/^https?:\/\//.test(url) && !url.endsWith(".html")) {
+            url = "https://www.google.com/search?q=" + encodeURIComponent(url);
+        }
+        const tab = tabs[currentTab];
+        tab.url = url;
+        // Update history
+        tab.history = tab.history.slice(0, tab.historyIndex + 1);
+        tab.history.push(url);
+        tab.historyIndex = tab.history.length - 1;
+        updateUI();
+    }
+
+    // --- Bookmarks ---
+    function openBookmark(url) {
+        navigateTo(url);
+        hideBookmarks();
+    }
+    function showBookmarks() {
+        document.getElementById('bookmark-dropdown').style.display = 'block';
+        document.addEventListener('mousedown', hideBookmarksOnClick, { once: true });
+    }
+    function hideBookmarks() {
+        document.getElementById('bookmark-dropdown').style.display = 'none';
+    }
+    function hideBookmarksOnClick(e) {
+        if (!document.getElementById('bookmark-dropdown').contains(e.target) &&
+            e.target.id !== 'bookmarks') {
+            hideBookmarks();
+        }
+    }
+    document.getElementById('bookmarks').onclick = showBookmarks;
+
+    // --- Web Slice Gallery (demo) ---
+    document.getElementById('slicegallery').onclick = () => {
+        navigateTo('https://en.wikipedia.org/wiki/Web_slice');
+    };
+
+    // --- Navigation ---
+    document.getElementById('back').onclick = goBack;
+    document.getElementById('forward').onclick = goForward;
+    document.getElementById('refresh').onclick = refreshPage;
+    document.getElementById('homepage').onclick = goHome;
+    document.getElementById('Green').onclick = () => {
+        navigateTo(document.getElementById('urlInput').value.trim());
+    };
+    document.getElementById('urlInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            navigateTo(this.value.trim());
+        }
+    });
+    document.getElementById('new-tab').onclick = () => addTab();
+
+    // --- Initial Render ---
+    updateUI();
+    </script>
+</body>
 </html>
