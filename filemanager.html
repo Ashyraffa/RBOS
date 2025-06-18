@@ -302,13 +302,6 @@ const fanarts = [
         demo: true,
         url: "./indigokeen.jpeg"
     },
-    {
-        name: "credits.txt",
-        type: "file",
-        icon: "📄",
-        demo: true,
-        url: "./credits.txt"
-    }
 ];
 
 let fileSystem = {
@@ -573,7 +566,9 @@ function openFile(file) {
                 .then(text => {
                     fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${text.replace(/</g,"&lt;")}</pre>`;
                 })
-
+                .catch(() => {
+                    fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this text file.</span>`;
+                });
         } else if (getBase64()) {
             const arr = getBase64().split(',');
             const bstr = atob(arr[1]);
