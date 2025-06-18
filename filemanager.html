@@ -252,9 +252,70 @@
 const STORAGE_KEY = "bubblegemos_filemanager_filesystem";
 
 // --- File System Structure ---
+const fanarts = [
+    {
+        name: "bluesapphire.jpeg",
+        type: "file",
+        icon: "🖼️",
+        demo: true,
+        url: "./bluesapphire.jpeg"
+    },
+    {
+        name: "greenleaf.jpeg",
+        type: "file",
+        icon: "🖼️",
+        demo: true,
+        url: "./greenleaf.jpeg"
+    },
+    {
+        name: "orangeamber.jpeg",
+        type: "file",
+        icon: "🖼️",
+        demo: true,
+        url: "./orangeamber.jpeg"
+    },
+    {
+        name: "purplestar.jpeg",
+        type: "file",
+        icon: "🖼️",
+        demo: true,
+        url: "./purplestar.jpeg"
+    },
+    {
+        name: "yellow-gold.jpeg",
+        type: "file",
+        icon: "🖼️",
+        demo: true,
+        url: "./yellow-gold.jpeg"
+    },
+    {
+        name: "redruby.jpeg",
+        type: "file",
+        icon: "🖼️",
+        demo: true,
+        url: "./redruby.jpeg"
+    },
+    {
+        name: "indigokeen.jpeg",
+        type: "file",
+        icon: "🖼️",
+        demo: true,
+        url: "./indigokeen.jpeg"
+    },
+    {
+        name: "credits.txt",
+        type: "file",
+        icon: "📄",
+        demo: true,
+        url: "./credits.txt"
+    }
+];
+
 let fileSystem = {
     recents: [],
-    fanarts: [],
+    fanarts: [
+        ...fanarts
+    ],
     pictures: [],
     localdisk: [],
     localdata: []
@@ -334,8 +395,7 @@ function saveFileSystem() {
     }
 }
 
-// --- Initialization ---
-loadFileSystem();
+
 let currentFolder = "recents";
 let selectedFile = null;
 
@@ -446,10 +506,11 @@ const fileModalClose = document.getElementById('file-modal-close');
 fileModalClose.onclick = () => { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; };
 fileModal.onclick = (e) => { if (e.target === fileModal) { fileModal.style.display = 'none'; fileModalBody.innerHTML = ""; } };
 
+// Remove broken modal code and restore correct openFile logic:
 function openFile(file) {
     fileModal.style.display = 'flex';
     fileModalBody.innerHTML = '<span style="color:#888;">Loading...</span>';
-    const ext = file.name.split('.').pop().toLowerCase();
+    let ext = file.name.split('.').pop().toLowerCase();
     const getBase64 = () => file._fileData && file._fileData.data ? file._fileData.data : null;
 
     let url = null;
@@ -460,6 +521,8 @@ function openFile(file) {
             url = null;
         }
         if (!url && getBase64()) url = getBase64();
+    } else if (file.demo && file.url) {
+        url = file.url;
     } else if (file.demo && getBase64()) {
         url = getBase64();
     }
@@ -493,21 +556,24 @@ function openFile(file) {
             fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this PDF file.</span>`;
         }
     } else if (["txt"].includes(ext)) {
+        // Fix: Always fetch and display text, even for demo files with url
         if (file.file) {
             const reader = new FileReader();
             reader.onload = function(ev) {
                 fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${ev.target.result.replace(/</g,"&lt;")}</pre>`;
             };
             reader.onerror = function() {
-                if (getBase64()) {
-                    const arr = getBase64().split(',');
-                    const bstr = atob(arr[1]);
-                    fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${bstr.replace(/</g,"&lt;")}</pre>`;
-                } else {
-                    fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this text file.</span>`;
-                }
+                fileModalBody.innerHTML = `<span style="color:#888;">Cannot preview this text file.</span>`;
             };
             reader.readAsText(file.file);
+        } else if (file.demo && file.url) {
+            // Fix: Use fetch for demo .txt files
+            fetch(file.url)
+                .then(resp => resp.ok ? resp.text() : Promise.reject())
+                .then(text => {
+                    fileModalBody.innerHTML = `<pre style="max-width:65vw;max-height:55vh;overflow:auto;background:#f7f7f7;padding:18px;border-radius:8px;">${text.replace(/</g,"&lt;")}</pre>`;
+                })
+
         } else if (getBase64()) {
             const arr = getBase64().split(',');
             const bstr = atob(arr[1]);
