@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Paint App</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+    #toolbar {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .tool {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+      cursor: pointer;
+    }
+    #eraser {
+      background: pink;
+    }
+    #clear {
+      background: white;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    canvas {
+      display: block;
+    }
+    #layers-panel {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px;
+      box-shadow: 0 0 8px #0002;
+      padding: 10px 14px;
+      z-index: 20;
+      min-width: 120px;
+    }
+    #layers-panel h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    #layers-list {
+      margin: 0 0 8px 0;
+      padding: 0;
+      list-style: none;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    #layers-list li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #eee;
+      border-radius: 4px;
+      padding: 2px 6px;
+      transition: background 0.13s;
+    }
+    #layers-list li.active {
+      background: #cce6ff;
+      font-weight: bold;
+    }
+    #add-layer-btn {
+      background: #007aff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    #remove-layer-btn {
+      background: #ff5f57;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-left: 6px;
+      margin-top: 4px;
+    }
+    #color-picker {
+      width: 32px;
+      height: 32px;
+      border: none;
+      margin-left: 8px;
+      vertical-align: middle;
+      cursor: pointer;
+      background: none;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="toolbar">
+    <div class="tool" style="background: black" data-color="#000"></div>
+    <div class="tool" style="background: red" data-color="red"></div>
+    <div class="tool" style="background: blue" data-color="blue"></div>
+    <div class="tool" style="background: green" data-color="green"></div>
+    <div class="tool" style="background: orange" data-color="orange"></div>
+    <div class="tool" style="background: purple" data-color="purple"></div>
+    <div class="tool" id="eraser" data-color="white"></div>
+    <input type="color" id="color-picker" title="Pick a color" />
+    <button id="clear">🗑️</button>
+  </div>
+  <div id="layers-panel">
+    <h4>Layers</h4>
+    <ul id="layers-list"></ul>
+    <button id="add-layer-btn">Add Layer</button>
+    <button id="remove-layer-btn">Remove Layer</button>
+  </div>
+  <script>
+    // --- Layer System ---
+    let layers = [];
+    let currentLayer = 0;
+
+    function resizeAllLayers(width, height) {
+      layers.forEach(layer => {
+        if (layer.canvas.width !== width || layer.canvas.height !== height) {
+          // Resize and keep content
+          const old = document.createElement('canvas');
+          old.width = layer.canvas.width;
+          old.height = layer.canvas.height;
+          old.getContext('2d').drawImage(layer.canvas, 0, 0);
+          layer.canvas.width = width;
+          layer.canvas.height = height;
+          layer.ctx.drawImage(old, 0, 0);
+        }
+      });
+    }
+
+    function addLayer(name) {
+      const c = document.createElement('canvas');
+      c.width = canvas.width;
+      c.height = canvas.height;
+      const ctx = c.getContext('2d');
+      layers.push({ name: name || `Layer ${layers.length+1}`, canvas: c, ctx });
+      currentLayer = layers.length - 1;
+      renderLayersPanel();
+      redrawAll();
+    }
+
+    function removeLayer() {
+      if (layers.length <= 1) return;
+      layers.splice(currentLayer, 1);
+      currentLayer = Math.max(0, currentLayer - 1);
+      renderLayersPanel();
+      redrawAll();
+    }
+
+    function renderLayersPanel() {
+      const list = document.getElementById('layers-list');
+      list.innerHTML = '';
+      layers.forEach((layer, idx) => {
+        const li = document.createElement('li');
+        li.textContent = layer.name;
+        if (idx === currentLayer) li.classList.add('active');
+        li.onclick = () => {
+          currentLayer = idx;
+          renderLayersPanel();
+        };
+        list.appendChild(li);
+      });
+    }
+
+    function redrawAll() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      layers.forEach(layer => {
+        ctx.drawImage(layer.canvas, 0, 0);
+      });
+    }
+
+    // --- Canvas Setup ---
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      resizeAllLayers(canvas.width, canvas.height);
+      redrawAll();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- Drawing Logic ---
+    let painting = false;
+    let currentColor = 'black';
+
+    function startPosition(e) {
+      painting = true;
+      draw(e);
+    }
+
+    function endPosition() {
+      painting = false;
+      layers[currentLayer].ctx.beginPath();
+      redrawAll();
+    }
+
+    function draw(e) {
+      if (!painting) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      const layerCtx = layers[currentLayer].ctx;
+      layerCtx.lineWidth = 5;
+      layerCtx.lineCap = 'round';
+      layerCtx.strokeStyle = currentColor;
+      layerCtx.lineTo(x, y);
+      layerCtx.stroke();
+      layerCtx.beginPath();
+      layerCtx.moveTo(x, y);
+      redrawAll();
+    }
+
+    canvas.addEventListener('mousedown', startPosition);
+    canvas.addEventListener('mouseup', endPosition);
+    canvas.addEventListener('mouseout', endPosition);
+    canvas.addEventListener('mousemove', draw);
+
+    // Touch support
+    canvas.addEventListener('touchstart', startPosition);
+    canvas.addEventListener('touchend', endPosition);
+    canvas.addEventListener('touchcancel', endPosition);
+    canvas.addEventListener('touchmove', draw);
+
+    document.querySelectorAll('.tool').forEach(tool => {
+      tool.addEventListener('click', () => {
+        currentColor = tool.getAttribute('data-color');
+      });
+    });
+
+    document.getElementById('color-picker').addEventListener('input', function() {
+      currentColor = this.value;
+    });
+
+    document.getElementById('clear').addEventListener('click', () => {
+      layers[currentLayer].ctx.clearRect(0, 0, canvas.width, canvas.height);
+      redrawAll();
+    });
+
+    document.getElementById('add-layer-btn').onclick = () => addLayer();
+    document.getElementById('remove-layer-btn').onclick = () => removeLayer();
+
+    // --- Init ---
+    addLayer('Background');
+    resizeCanvas();
+    renderLayersPanel();
+  </script>
+</body>
+</html>

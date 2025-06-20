@@ -447,6 +447,7 @@ document.querySelectorAll('.dropdown-content a').forEach(link => {
         <a href="#" onclick="openAppWindow('Terminal', 'terminal.html');return false"><img src="terminal.png" alt="Terminal"></a>
         <a href="#" onclick="openAppWindow('Notes', 'notes.html');return false;"><img src="notes.png" alt="Notes"></a>
         <a href="#" onclick="openAppWindow('Store', 'appstore.html');return false;"><img src="shop.png" alt="Store"></a>
+        <a href="#" onclick="openAppWindow('Paint', 'paint.html');return false;"><img src="paint.png" alt="Paint"></a>
       </div>
     </footer>
 
@@ -524,6 +525,12 @@ document.querySelectorAll('.dropdown-content a').forEach(link => {
                 <img src="shop.png" alt="Store">
               </div>
               <div class="launchpad-app-label">Store</div>
+            </div>
+            <div class="launchpad-app" onclick="openAppFromLaunchpad('Paint', 'paint.html')">
+              <div class="launchpad-app-icon">
+                <img src="paint.png" alt="Paint">
+              </div>
+              <div class="launchpad-app-label">Paint</div>
             </div>
           </div>
           </div>
