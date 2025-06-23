@@ -919,6 +919,24 @@ function openAppFromLaunchpad(title, url) {
   openAppWindow(title, url);
   document.getElementById('start-menu-overlay').style.display = 'none';
 }
+    // Wallpaper logic: load from localStorage if set
+function applyCustomWallpaper() {
+    const dataUrl = localStorage.getItem('customWallpaper');
+    if (dataUrl) {
+        document.body.style.backgroundImage = `url('${dataUrl}')`;
+    } else {
+        document.body.style.backgroundImage = "url(wallpaper.png)";
+    }
+}
+applyCustomWallpaper();
+
+// Listen for wallpaper change messages from settings app
+window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'set-wallpaper' && e.data.dataUrl) {
+        localStorage.setItem('customWallpaper', e.data.dataUrl);
+        applyCustomWallpaper();
+    }
+});
     // ...existing code...
 </script>
 <script>

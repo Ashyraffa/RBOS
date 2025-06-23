@@ -7,61 +7,113 @@
   <style>
     body {
       margin: 0;
-      font-family: sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       overflow: hidden;
+      background: #f3f3f3;
     }
-    #toolbar {
-      position: fixed;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px;
-      border-radius: 10px;
+    #paint-toolbar {
       display: flex;
-      gap: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      align-items: center;
+      background: #e5e5e5;
+      border-bottom: 1px solid #c1c1c1;
+      padding: 0 12px;
+      height: 54px;
+      gap: 16px;
+      box-shadow: 0 2px 8px #0001;
+      user-select: none;
     }
-    .tool {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 2px solid #ccc;
+    .tool-btn {
+      background: #fff;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      margin: 0 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      transition: border 0.13s, background 0.13s;
+      font-size: 1.3em;
     }
-    #eraser {
-      background: pink;
+    .tool-btn.active, .tool-btn:hover {
+      border: 2px solid #0078d7;
+      background: #eaf4ff;
     }
-    #clear {
-      background: white;
+    #pen-size {
+      width: 80px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    #color-palette {
+      display: flex;
+      gap: 4px;
+      margin-left: 12px;
+    }
+    .color-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+      cursor: pointer;
+      margin: 0 1px;
+      box-sizing: border-box;
+    }
+    .color-swatch.selected {
+      border: 2px solid #0078d7;
+    }
+    #color-picker {
+      width: 28px;
+      height: 28px;
       border: none;
+      margin-left: 6px;
+      vertical-align: middle;
       cursor: pointer;
-      font-size: 18px;
+      background: none;
+      padding: 0;
+    }
+    #undo-btn, #redo-btn {
+      margin-left: 8px;
+    }
+    #canvas-container {
+      position: absolute;
+      top: 54px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #fff;
+      overflow: hidden;
     }
     canvas {
       display: block;
+      background: #fff;
+      cursor: crosshair;
     }
     #layers-panel {
       position: fixed;
-      top: 10px;
-      right: 10px;
-      background: rgba(255,255,255,0.95);
+      top: 64px;
+      right: 16px;
+      background: #f7f7f7;
+      border: 1px solid #c1c1c1;
       border-radius: 8px;
       box-shadow: 0 0 8px #0002;
       padding: 10px 14px;
       z-index: 20;
-      min-width: 120px;
+      min-width: 140px;
+      width: 180px;
     }
     #layers-panel h4 {
       margin: 0 0 8px 0;
       font-size: 15px;
       font-weight: bold;
+      color: #0078d7;
+      text-align: center;
     }
     #layers-list {
       margin: 0 0 8px 0;
       padding: 0;
       list-style: none;
-      max-height: 120px;
+      max-height: 140px;
       overflow-y: auto;
     }
     #layers-list li {
@@ -74,12 +126,22 @@
       border-radius: 4px;
       padding: 2px 6px;
       transition: background 0.13s;
+      user-select: none;
     }
     #layers-list li.active {
       background: #cce6ff;
       font-weight: bold;
     }
-    #add-layer-btn {
+    .rename-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: #0078d7;
+      font-size: 1em;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    #add-layer-btn, #remove-layer-btn {
       background: #007aff;
       color: #fff;
       border: none;
@@ -88,54 +150,106 @@
       font-size: 13px;
       cursor: pointer;
       margin-top: 4px;
+      margin-right: 4px;
     }
     #remove-layer-btn {
       background: #ff5f57;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 3px 10px;
-      font-size: 13px;
-      cursor: pointer;
-      margin-left: 6px;
-      margin-top: 4px;
+      margin-left: 0;
     }
-    #color-picker {
-      width: 32px;
-      height: 32px;
-      border: none;
+    #bucket-tip {
+      font-size: 12px;
+      color: #888;
       margin-left: 8px;
-      vertical-align: middle;
-      cursor: pointer;
-      background: none;
-      padding: 0;
+      display: none;
+    }
+    @media (max-width: 700px) {
+      #layers-panel { top: 120px; right: 2vw; min-width: 90px; width: 120px; }
+      #paint-toolbar { flex-wrap: wrap; height: auto; }
     }
   </style>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
-  <div id="toolbar">
-    <div class="tool" style="background: black" data-color="#000"></div>
-    <div class="tool" style="background: red" data-color="red"></div>
-    <div class="tool" style="background: blue" data-color="blue"></div>
-    <div class="tool" style="background: green" data-color="green"></div>
-    <div class="tool" style="background: orange" data-color="orange"></div>
-    <div class="tool" style="background: purple" data-color="purple"></div>
-    <div class="tool" id="eraser" data-color="white"></div>
-    <input type="color" id="color-picker" title="Pick a color" />
-    <button id="clear">🗑️</button>
+  <div id="paint-toolbar">
+    <button class="tool-btn active" id="pen-tool" title="Pen (P)">✏️</button>
+    <button class="tool-btn" id="bucket-tool" title="Bucket Fill (B)">🪣</button>
+    <button class="tool-btn" id="eraser-tool" title="Eraser (E)">🧽</button>
+    <input type="range" id="pen-size" min="1" max="32" value="5" title="Pen Size">
+    <span id="pen-size-label" style="font-size:13px;">5 px</span>
+    <div id="color-palette">
+      <div class="color-swatch selected" style="background:#000" data-color="#000"></div>
+      <div class="color-swatch" style="background:#fff" data-color="#fff"></div>
+      <div class="color-swatch" style="background:#e81123" data-color="#e81123"></div>
+      <div class="color-swatch" style="background:#ffb900" data-color="#ffb900"></div>
+      <div class="color-swatch" style="background:#107c10" data-color="#107c10"></div>
+      <div class="color-swatch" style="background:#0057b8" data-color="#0057b8"></div>
+      <div class="color-swatch" style="background:#b4009e" data-color="#b4009e"></div>
+      <div class="color-swatch" style="background:#f7630c" data-color="#f7630c"></div>
+      <input type="color" id="color-picker" title="Pick a color" />
+    </div>
+    <button class="tool-btn" id="undo-btn" title="Undo (Ctrl+Z)">⎌</button>
+    <button class="tool-btn" id="redo-btn" title="Redo (Ctrl+Y)">↻</button>
+    <button class="tool-btn" id="clear-btn" title="Clear Layer">🗑️</button>
+    <span id="bucket-tip">Click to fill area</span>
+  </div>
+  <div id="canvas-container">
+    <canvas id="canvas"></canvas>
   </div>
   <div id="layers-panel">
     <h4>Layers</h4>
     <ul id="layers-list"></ul>
-    <button id="add-layer-btn">Add Layer</button>
-    <button id="remove-layer-btn">Remove Layer</button>
+    <div style="display:flex;gap:4px;">
+      <button id="add-layer-btn">Add Layer</button>
+      <button id="remove-layer-btn">Remove</button>
+    </div>
   </div>
   <script>
     // --- Layer System ---
     let layers = [];
     let currentLayer = 0;
+    let layerHistories = []; // For undo/redo per layer
+    let layerHistoryIndex = [];
+    let penSize = 5;
+    let currentColor = '#000';
+    let currentTool = 'pen'; // pen, eraser, bucket
 
+    // --- Undo/Redo ---
+    function pushHistory() {
+      const l = currentLayer;
+      // Limit history to 30 steps per layer
+      if (!layerHistories[l]) layerHistories[l] = [];
+      if (!layerHistoryIndex[l]) layerHistoryIndex[l] = 0;
+      // Remove redo stack if any
+      layerHistories[l] = layerHistories[l].slice(0, layerHistoryIndex[l] + 1);
+      // Save current image
+      layerHistories[l].push(layers[l].canvas.toDataURL());
+      if (layerHistories[l].length > 30) layerHistories[l].shift();
+      layerHistoryIndex[l] = layerHistories[l].length - 1;
+    }
+    function undo() {
+      const l = currentLayer;
+      if (layerHistoryIndex[l] > 0) {
+        layerHistoryIndex[l]--;
+        restoreLayerFromHistory(l, layerHistoryIndex[l]);
+      }
+    }
+    function redo() {
+      const l = currentLayer;
+      if (layerHistoryIndex[l] < layerHistories[l].length - 1) {
+        layerHistoryIndex[l]++;
+        restoreLayerFromHistory(l, layerHistoryIndex[l]);
+      }
+    }
+    function restoreLayerFromHistory(layerIdx, histIdx) {
+      const img = new window.Image();
+      img.onload = function() {
+        layers[layerIdx].ctx.clearRect(0, 0, canvas.width, canvas.height);
+        layers[layerIdx].ctx.drawImage(img, 0, 0);
+        redrawAll();
+      };
+      img.src = layerHistories[layerIdx][histIdx];
+    }
+
+    // --- Layer Management ---
     function resizeAllLayers(width, height) {
       layers.forEach(layer => {
         if (layer.canvas.width !== width || layer.canvas.height !== height) {
@@ -150,26 +264,36 @@
         }
       });
     }
-
     function addLayer(name) {
       const c = document.createElement('canvas');
       c.width = canvas.width;
       c.height = canvas.height;
       const ctx = c.getContext('2d');
       layers.push({ name: name || `Layer ${layers.length+1}`, canvas: c, ctx });
+      layerHistories.push([]);
+      layerHistoryIndex.push(-1);
       currentLayer = layers.length - 1;
+      pushHistory();
       renderLayersPanel();
       redrawAll();
     }
-
     function removeLayer() {
       if (layers.length <= 1) return;
       layers.splice(currentLayer, 1);
+      layerHistories.splice(currentLayer, 1);
+      layerHistoryIndex.splice(currentLayer, 1);
       currentLayer = Math.max(0, currentLayer - 1);
       renderLayersPanel();
       redrawAll();
     }
-
+    function renameLayer(idx) {
+      const oldName = layers[idx].name;
+      const newName = prompt("Rename Layer", oldName);
+      if (newName && newName.trim()) {
+        layers[idx].name = newName.trim();
+        renderLayersPanel();
+      }
+    }
     function renderLayersPanel() {
       const list = document.getElementById('layers-list');
       list.innerHTML = '';
@@ -181,10 +305,24 @@
           currentLayer = idx;
           renderLayersPanel();
         };
+        // Rename button
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = '✎';
+        renameBtn.className = 'rename-btn';
+        renameBtn.title = 'Rename Layer';
+        renameBtn.onclick = (e) => {
+          e.stopPropagation();
+          renameLayer(idx);
+        };
+        li.appendChild(renameBtn);
+        // Double-click to rename
+        li.ondblclick = (e) => {
+          e.stopPropagation();
+          renameLayer(idx);
+        };
         list.appendChild(li);
       });
     }
-
     function redrawAll() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       layers.forEach(layer => {
@@ -197,7 +335,7 @@
     const ctx = canvas.getContext('2d');
     function resizeCanvas() {
       canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.height = window.innerHeight - 54;
       resizeAllLayers(canvas.width, canvas.height);
       redrawAll();
     }
@@ -205,35 +343,96 @@
 
     // --- Drawing Logic ---
     let painting = false;
-    let currentColor = 'black';
+    let lastX = 0, lastY = 0;
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      return { x, y };
+    }
 
     function startPosition(e) {
+      if (currentTool === 'bucket') {
+        const { x, y } = getPointerPos(e);
+        bucketFill(x, y, currentColor);
+        pushHistory();
+        redrawAll();
+        return;
+      }
       painting = true;
+      const { x, y } = getPointerPos(e);
+      lastX = x;
+      lastY = y;
       draw(e);
     }
 
     function endPosition() {
-      painting = false;
-      layers[currentLayer].ctx.beginPath();
-      redrawAll();
+      if (painting) {
+        painting = false;
+        layers[currentLayer].ctx.beginPath();
+        pushHistory();
+        redrawAll();
+      }
     }
 
     function draw(e) {
-      if (!painting) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      if (!painting || currentTool === 'bucket') return;
+      const { x, y } = getPointerPos(e);
       const layerCtx = layers[currentLayer].ctx;
-      layerCtx.lineWidth = 5;
+      layerCtx.lineWidth = penSize;
       layerCtx.lineCap = 'round';
-      layerCtx.strokeStyle = currentColor;
+      layerCtx.lineJoin = 'round';
+      layerCtx.strokeStyle = (currentTool === 'eraser') ? '#fff' : currentColor;
+      layerCtx.globalCompositeOperation = (currentTool === 'eraser') ? 'destination-out' : 'source-over';
+      layerCtx.beginPath();
+      layerCtx.moveTo(lastX, lastY);
       layerCtx.lineTo(x, y);
       layerCtx.stroke();
-      layerCtx.beginPath();
-      layerCtx.moveTo(x, y);
+      lastX = x;
+      lastY = y;
       redrawAll();
     }
 
+    // --- Bucket Fill ---
+    function bucketFill(x, y, fillColor) {
+      const ctx = layers[currentLayer].ctx;
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const width = imageData.width;
+      const height = imageData.height;
+      const startIdx = (Math.floor(y) * width + Math.floor(x)) * 4;
+      const targetColor = data.slice(startIdx, startIdx + 4);
+      const fillRgba = hexToRgba(fillColor);
+
+      if (colorsMatch(targetColor, fillRgba)) return;
+
+      const stack = [[Math.floor(x), Math.floor(y)]];
+      while (stack.length) {
+        const [cx, cy] = stack.pop();
+        if (cx < 0 || cy < 0 || cx >= width || cy >= height) continue;
+        const idx = (cy * width + cx) * 4;
+        if (colorsMatch(data.slice(idx, idx + 4), targetColor)) {
+          data[idx] = fillRgba[0];
+          data[idx + 1] = fillRgba[1];
+          data[idx + 2] = fillRgba[2];
+          data[idx + 3] = 255;
+          stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+    function hexToRgba(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      const num = parseInt(hex, 16);
+      return [(num >> 16) & 255, (num >> 8) & 255, num & 255, 255];
+    }
+    function colorsMatch(a, b) {
+      return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && (a[3] === undefined || b[3] === undefined || a[3] === b[3]);
+    }
+
+    // --- UI Events ---
     canvas.addEventListener('mousedown', startPosition);
     canvas.addEventListener('mouseup', endPosition);
     canvas.addEventListener('mouseout', endPosition);
@@ -245,28 +444,70 @@
     canvas.addEventListener('touchcancel', endPosition);
     canvas.addEventListener('touchmove', draw);
 
-    document.querySelectorAll('.tool').forEach(tool => {
-      tool.addEventListener('click', () => {
-        currentColor = tool.getAttribute('data-color');
+    // Tool selection
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      if (tool === 'pen') document.getElementById('pen-tool').classList.add('active');
+      if (tool === 'eraser') document.getElementById('eraser-tool').classList.add('active');
+      if (tool === 'bucket') document.getElementById('bucket-tool').classList.add('active');
+      document.getElementById('bucket-tip').style.display = (tool === 'bucket') ? 'inline' : 'none';
+      canvas.style.cursor = (tool === 'bucket') ? 'cell' : 'crosshair';
+    }
+    document.getElementById('pen-tool').onclick = () => setTool('pen');
+    document.getElementById('eraser-tool').onclick = () => setTool('eraser');
+    document.getElementById('bucket-tool').onclick = () => setTool('bucket');
+
+    // Pen size
+    document.getElementById('pen-size').addEventListener('input', function() {
+      penSize = parseInt(this.value, 10);
+      document.getElementById('pen-size-label').textContent = penSize + ' px';
+    });
+
+    // Color palette
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+      swatch.addEventListener('click', function() {
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+        this.classList.add('selected');
+        currentColor = this.getAttribute('data-color');
+        setTool(currentTool); // update cursor if needed
       });
     });
-
     document.getElementById('color-picker').addEventListener('input', function() {
       currentColor = this.value;
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      setTool(currentTool);
     });
 
-    document.getElementById('clear').addEventListener('click', () => {
+    // Undo/Redo/Clear
+    document.getElementById('undo-btn').onclick = undo;
+    document.getElementById('redo-btn').onclick = redo;
+    document.getElementById('clear-btn').onclick = () => {
       layers[currentLayer].ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pushHistory();
       redrawAll();
-    });
+    };
 
     document.getElementById('add-layer-btn').onclick = () => addLayer();
     document.getElementById('remove-layer-btn').onclick = () => removeLayer();
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+      if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+      if (e.key.toLowerCase() === 'p') setTool('pen');
+      if (e.key.toLowerCase() === 'e') setTool('eraser');
+      if (e.key.toLowerCase() === 'b') setTool('bucket');
+    });
 
     // --- Init ---
     addLayer('Background');
     resizeCanvas();
     renderLayersPanel();
+    setTool('pen');
+    document.getElementById('pen-size-label').textContent = penSize + ' px';
+    // Initial history
+    pushHistory();
   </script>
 </body>
 </html>

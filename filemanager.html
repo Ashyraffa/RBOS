@@ -23,6 +23,33 @@
             height: 100vh;
             overflow: hidden;
         }
+          .context-menu {
+    display: none; /* Hidden by default */
+    position: absolute;
+    background: rgba(255,255,255,0.9);
+    min-width: 150px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 150px;
+  }
+  
+  .context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 5px 0;
+  }
+  
+  .context-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .context-menu li:hover {
+    background-color:  rgba(200,200,200,0.3);
+  }
+
         .finder-window {
             width: 100vw;
             height: 100vh;
@@ -192,6 +219,12 @@
             </div>
             <span class="finder-title">File Manager</span>
         </div>
+    <div id="custom-menu" class="context-menu">
+      <ul>
+        <li onclick="location.reload()">Refresh</li>
+        <li onclick="uploadBtn.onclick()">Upload A File...</li>
+      </ul>
+    </div>
         <div class="finder-main">
             <nav class="finder-sidebar">
                 <div class="sidebar-section">
@@ -249,6 +282,22 @@
   </div>
 </div>
     <script>
+  const customMenu = document.getElementById('custom-menu');
+
+document.addEventListener('contextmenu', function (event) {
+
+  event.preventDefault(); // Prevent the default context menu
+  
+  customMenu.style.top = `${event.clientY}px`;
+  customMenu.style.left = `${event.clientX}px`;
+  customMenu.style.display = 'block';
+});
+
+
+document.addEventListener('click', function () {
+  customMenu.style.display = 'none';
+});
+
 const STORAGE_KEY = "bubblegemos_filemanager_filesystem";
 
 // --- File System Structure ---

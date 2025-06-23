@@ -263,6 +263,14 @@
                         <label for="font-size">Font Size</label>
                         <input type="range" id="font-size" min="12" max="22" value="15">
                     </div>
+                    <div class="settings-row">
+                        <label for="wallpaper-upload">Wallpaper</label>
+                        <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+                            <input type="file" id="wallpaper-upload" accept="image/*">
+                            <button id="wallpaper-apply" style="margin-top:2px; padding:2px 12px; border-radius:6px; border:1px solid #ccc; background:#fafafd; font-size:14px; cursor:pointer;">Apply</button>
+                            <img id="wallpaper-preview" src="" alt="Preview" style="display:none; max-width:120px; max-height:70px; border-radius:8px; border:1px solid #ddd; margin-top:4px;">
+                        </div>
+                    </div>
                 </div>
             `,
             network: `
@@ -302,6 +310,44 @@
 
         function showSection(section) {
             document.getElementById('settings-content').innerHTML = sections[section];
+
+            // Wallpaper upload logic (only for appearance section)
+            if (section === "appearance") {
+                const upload = document.getElementById('wallpaper-upload');
+                const applyBtn = document.getElementById('wallpaper-apply');
+                const preview = document.getElementById('wallpaper-preview');
+                let selectedDataUrl = null;
+
+                // Show preview when file selected
+                if (upload) {
+                    upload.addEventListener('change', function() {
+                        const file = this.files && this.files[0];
+                        if (!file) {
+                            preview.style.display = "none";
+                            selectedDataUrl = null;
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            selectedDataUrl = e.target.result;
+                            preview.src = selectedDataUrl;
+                            preview.style.display = "block";
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                // Apply wallpaper on button click
+                if (applyBtn) {
+                    applyBtn.addEventListener('click', function() {
+                        if (!selectedDataUrl) return;
+                        localStorage.setItem('customWallpaper', selectedDataUrl);
+                        if (window.parent !== window) {
+                            window.parent.postMessage({ type: 'set-wallpaper', dataUrl: selectedDataUrl }, '*');
+                        }
+                    });
+                }
+            }
         }
 
         document.getElementById('sidebar').addEventListener('click', function(e) {
